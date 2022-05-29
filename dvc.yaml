@@ -1,0 +1,9 @@
+stages:
+  merge_data:
+    cmd: python src/data/merge_data.py data/raw/ data/interim/data_test_labels.csv data/interim/data_train.csv
+    deps:
+      - data/raw/
+      - src/data/merge_data.py
+    outs:
+      - data/interim/data_test_labels.csv
+      - data/interim/data_train.csv

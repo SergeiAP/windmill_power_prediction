@@ -1,0 +1,20 @@
+schema: '2.0'
+stages:
+  merge_data:
+    cmd: python src/data/merge_data.py data/raw/ data/interim/data_test_labels.csv
+      data/interim/data_train.csv
+    deps:
+    - path: data/raw/
+      md5: 740993cae74002c2587001a4a5306b07.dir
+      size: 22905874
+      nfiles: 9
+    - path: src/data/merge_data.py
+      md5: a212d53de6460a87b17e48afc7b701b3
+      size: 6221
+    outs:
+    - path: data/interim/data_test_labels.csv
+      md5: ef24b964f024baad818ec6fd7d3978cd
+      size: 156246
+    - path: data/interim/data_train.csv
+      md5: 0386eb3f967332072dba136b08062867
+      size: 32784950
