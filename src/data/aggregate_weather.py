@@ -22,9 +22,9 @@ class WeatherAggregationPolicy:
                      'params': agg_weather_params}}
 
     """
-    date = 'date'
-    windfarm = 'windfarm'
-    target = 'wp'
+    date_col = 'date'
+    windfarm_col = 'windfarm'
+    target_col = 'wp'
 
     def __init__(self) -> None:
         self.get_df = self.get_whole_df
@@ -35,25 +35,24 @@ class WeatherAggregationPolicy:
         have unique date for each windfarm
 
         Args:
-            df (pd.DataFrame): dataset with weather features and `windfarm` col
+            df (pd.DataFrame): dataset with weather features and `windfarm_col` col
             params (dict): parameters to denote preprocess characteristics
 
         Returns:
-            pd.DataFrame: dataset with unique date for windfarm and aggregated weather
+            pd.DataFrame: dataset with unique date for windfarm_col and aggregated weather
         """
         dfs_list = []
-        df = df.reset_index()
         params = copy.deepcopy(params)
         if 'nans' in params and 'train' in params:
             self.get_df = self.get_concat_df
             for colname in params:
                 date_idxs = (
-                    df[df[self.target].notna()][self.date] if colname == "train" else
-                    df[df[self.target].isna()][self.date]
+                    df[df[self.target_col].notna()][self.date_col] if colname == "train" else
+                    df[df[self.target_col].isna()][self.date_col]
                 )
-                params[colname].update({self.date: date_idxs.sort_values()})
-        for windfarm in df[self.windfarm].unique():
-            df_farm = df[df[self.windfarm] == windfarm]
+                params[colname].update({self.date_col: date_idxs.sort_values()})
+        for windfarm_id in df[self.windfarm_col].unique():
+            df_farm = df[df[self.windfarm_col] == windfarm_id]
             dfs_list.append(self.get_df(df=df_farm, params=params)) # type: ignore
         df_res = pd.concat(dfs_list, axis="index")
         return df_res # type: ignore
@@ -91,11 +90,11 @@ class WeatherAggregationPolicy:
         dfs_list = []
         for df_type in params:
             df_agg = params[df_type]['class'](
-                df=df[df[self.date].isin(params[df_type][self.date])],
+                df=df[df[self.date_col].isin(params[df_type][self.date_col])],
                 params=params[df_type]['params']
                 )
-            dfs_list.append(df_agg.set_index(keys=self.date, drop=True))
-        return pd.concat(dfs_list).reset_index(drop=False).sort_values(self.date)
+            dfs_list.append(df_agg.set_index(keys=self.date_col, drop=True))
+        return pd.concat(dfs_list).reset_index(drop=False).sort_values(self.date_col)
 
 
 @click.command()
@@ -108,7 +107,7 @@ def run_aggregate_weather(input_filepath: str, output_filepath: str) -> None:
     couls be used also - e.g. AggregatedWeatherPrediction.
 
     Args:
-        input_filepath (str): dataset with several windfarms in column `windfarm`
+        input_filepath (str): dataset with several windfarms in column `windfarm_col`
         output_filepath (str): path to save dataset with aggregated weather
     """
     df = pd.read_csv(input_filepath)

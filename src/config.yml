@@ -1,5 +1,11 @@
 common:
   seed: 42
 
-aggregate_weather:
+clip_outliers:
+  quantile_clip:
+    exclude: [date, hors, hour, wd, month, wp, windfarm]
+    lower: 0.05
+    upper: 0.95
+  iqr_clip:
+    exclude: ['date', 'hors', 'hour', 'wd', 'wp', 'windfarm']
   

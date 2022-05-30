@@ -25,15 +25,28 @@ stages:
       md5: 0386eb3f967332072dba136b08062867
       size: 32784950
     - path: src/data/aggregate_weather.py
-      md5: 0b65021d309a9df23f64595a033794c0
-      size: 4617
+      md5: 88727d8d8ba091f42e5249196626e806
+      size: 4660
     - path: src/data/aggregate_weather_config.py
       md5: 220ecb13ca44fc48bf3222c25aa8a566
       size: 2983
     - path: src/data/process_weather.py
-      md5: 7c5beacf1d6fa78817895eb56c7f5b8a
-      size: 12192
+      md5: df857812df9239f6f9242875b545309b
+      size: 11985
     outs:
     - path: data/interim/data_agg_weather.csv
-      md5: dfb282e6b51784a6fb94b9b143979a80
-      size: 9509021
+      md5: a02ba664e8205ba7bdba73cf2b2f6bcd
+      size: 8439585
+  clip_data:
+    cmd: python src/data/clip_outliers.py data/interim/data_agg_weather.csv data/interim/data_clipped.csv
+    deps:
+    - path: data/interim/data_agg_weather.csv
+      md5: a02ba664e8205ba7bdba73cf2b2f6bcd
+      size: 8439585
+    - path: src/data/clip_outliers.py
+      md5: af73526d35f79e886e370720ba03c396
+      size: 4520
+    outs:
+    - path: data/interim/data_clipped.csv
+      md5: f11b0f834795e6307eca9caf13ad10f1
+      size: 8523534

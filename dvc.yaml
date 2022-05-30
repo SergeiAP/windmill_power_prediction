@@ -16,3 +16,10 @@ stages:
       - src/data/process_weather.py
     outs:
       - data/interim/data_agg_weather.csv
+  clip_data:
+    cmd: python src/data/clip_outliers.py data/interim/data_agg_weather.csv data/interim/data_clipped.csv
+    deps:
+      - data/interim/data_agg_weather.csv
+      - src/data/clip_outliers.py
+    outs:
+      - data/interim/data_clipped.csv
