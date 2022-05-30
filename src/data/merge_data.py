@@ -153,13 +153,13 @@ class DataMerger:
 
 @click.command()
 @click.argument("input_folderpath", type=click.Path(exists=True))
-@click.argument("output_filepath", type=click.Path(), nargs=2)
-def run_merging_data(input_folderpath: str, output_filepath: str) -> None:
-    """_summary_
+@click.argument("output_filepaths", type=click.Path(), nargs=2)
+def run_merging_data(input_folderpath: str, output_filepaths: list[str]) -> None:
+    """Read, select and merge datasets presented in input_filepath
 
     Args:
-        input_filepath (str): _description_
-        output_filepath (str): _description_
+        input_filepath (str): path to the folder with data in `DATA_PATHS`
+        output_filepaths (str): paths to save train and test data
     """
     
     data_paths = {
@@ -169,8 +169,8 @@ def run_merging_data(input_folderpath: str, output_filepath: str) -> None:
     df_test, df_train = DataMerger(
         filter_date=(FIRST_TRAIN_DATE, LAST_TEST_DATE)
     ).merge_data(data_paths)
-    df_test.to_csv(output_filepath[0])
-    df_train.to_csv(output_filepath[1])
+    df_test.to_csv(output_filepaths[0])
+    df_train.to_csv(output_filepaths[1])
 
 
 if __name__ == "__main__":

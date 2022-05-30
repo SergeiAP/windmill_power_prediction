@@ -9,8 +9,8 @@ stages:
       size: 22905874
       nfiles: 9
     - path: src/data/merge_data.py
-      md5: a212d53de6460a87b17e48afc7b701b3
-      size: 6221
+      md5: 1af2e8df629a798657fe221676a79147
+      size: 6333
     outs:
     - path: data/interim/data_test_labels.csv
       md5: ef24b964f024baad818ec6fd7d3978cd
@@ -18,3 +18,22 @@ stages:
     - path: data/interim/data_train.csv
       md5: 0386eb3f967332072dba136b08062867
       size: 32784950
+  aggregate_weather:
+    cmd: python src/data/aggregate_weather.py data/interim/data_train.csv data/interim/data_agg_weather.csv
+    deps:
+    - path: data/interim/data_train.csv
+      md5: 0386eb3f967332072dba136b08062867
+      size: 32784950
+    - path: src/data/aggregate_weather.py
+      md5: 0b65021d309a9df23f64595a033794c0
+      size: 4617
+    - path: src/data/aggregate_weather_config.py
+      md5: 220ecb13ca44fc48bf3222c25aa8a566
+      size: 2983
+    - path: src/data/process_weather.py
+      md5: 7c5beacf1d6fa78817895eb56c7f5b8a
+      size: 12192
+    outs:
+    - path: data/interim/data_agg_weather.csv
+      md5: dfb282e6b51784a6fb94b9b143979a80
+      size: 9509021

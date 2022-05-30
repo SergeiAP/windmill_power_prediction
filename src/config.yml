@@ -1,2 +1,5 @@
 common:
   seed: 42
+
+aggregate_weather:
+  

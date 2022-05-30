@@ -7,3 +7,12 @@ stages:
     outs:
       - data/interim/data_test_labels.csv
       - data/interim/data_train.csv
+  aggregate_weather:
+    cmd: python src/data/aggregate_weather.py data/interim/data_train.csv data/interim/data_agg_weather.csv
+    deps:
+      - data/interim/data_train.csv
+      - src/data/aggregate_weather.py
+      - src/data/aggregate_weather_config.py
+      - src/data/process_weather.py
+    outs:
+      - data/interim/data_agg_weather.csv
