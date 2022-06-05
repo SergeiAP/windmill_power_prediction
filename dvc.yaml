@@ -1,3 +1,6 @@
+vars:
+  - common:
+      root: "./" 
 stages:
   merge_data:
     cmd: python src/data/merge_data.py data/raw/ data/interim/data_test_labels.csv data/interim/data_train.csv
@@ -23,3 +26,13 @@ stages:
       - src/data/clip_outliers.py
     outs:
       - data/interim/data_clipped.csv
+  create_features:
+    cmd: set PYTHONPATH=%PYTHONPATH%;${common.root} && python src/features/create_features.py data/interim/data_clipped.csv data/interim/data_featured.csv
+    deps:
+      - data/interim/data_clipped.csv
+      - src/features/create_features.py
+      - src/features/create_features_config.py
+      - src/features/math_functions.py
+      - src/features/process_features.py
+    outs:
+      - data/interim/data_featured.csv

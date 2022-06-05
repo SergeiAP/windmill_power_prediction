@@ -5,7 +5,7 @@ import click
 import pandas as pd
 
 # pylint: disable=import-error
-from aggregate_weather_config import agg_params_train_test # agg_params_all
+from aggregate_weather_config import agg_params_train_test  # agg_params_all
 
 
 class WeatherAggregationPolicy:
@@ -39,23 +39,25 @@ class WeatherAggregationPolicy:
             params (dict): parameters to denote preprocess characteristics
 
         Returns:
-            pd.DataFrame: dataset with unique date for windfarm_col and aggregated weather
+            pd.DataFrame: dataset with unique date for windfarm_col and aggregated 
+            weather
         """
-        dfs_list = []
+        dfs_list: list[pd.DataFrame] = []
         params = copy.deepcopy(params)
         if 'nans' in params and 'train' in params:
             self.get_df = self.get_concat_df
             for colname in params:
                 date_idxs = (
-                    df[df[self.target_col].notna()][self.date_col] if colname == "train" else
+                    df[df[self.target_col].notna()][self.date_col] 
+                    if colname == "train" else
                     df[df[self.target_col].isna()][self.date_col]
                 )
                 params[colname].update({self.date_col: date_idxs.sort_values()})
         for windfarm_id in df[self.windfarm_col].unique():
-            df_farm = df[df[self.windfarm_col] == windfarm_id]
-            dfs_list.append(self.get_df(df=df_farm, params=params)) # type: ignore
+            df_farm = df.loc[df[self.windfarm_col] == windfarm_id]
+            dfs_list.append(self.get_df(df=df_farm, params=params))
         df_res = pd.concat(dfs_list, axis="index")
-        return df_res # type: ignore
+        return df_res
     
 
     def get_whole_df(self, df: pd.DataFrame, params: dict) -> pd.DataFrame:

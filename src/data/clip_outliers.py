@@ -42,12 +42,12 @@ class ClipOtliers:
         Returns:
             pd.DataFrame: cliped dataframe for each windfarm
         """
-        dfs_list = []
+        dfs_list: list[pd.DataFrame] = []
         for windfarm_id in df[self.windfarm_col].unique():
             df_farm = df.loc[df[self.windfarm_col] == windfarm_id]
             dfs_list.append(self.get_df(df_farm))
         df_res = pd.concat(dfs_list, axis="index")
-        return df_res # type: ignore
+        return df_res
 
     def get_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """clip dataset of one windfarm 

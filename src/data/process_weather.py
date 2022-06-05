@@ -1,15 +1,14 @@
 # pylint: disable=missing-module-docstring
-# pylint: disable=wrong-import-position
 # to import modules from src
 import sys
 
-ROOT_FOLDER = "./"
-sys.path.append(ROOT_FOLDER)
-
 from abc import ABC, abstractmethod
-
 import numpy as np
 import pandas as pd
+
+# pylint: disable=wrong-import-position
+ROOT_FOLDER = "./"
+sys.path.append(ROOT_FOLDER)
 from src.read_config import get_data_config
 
 
@@ -33,6 +32,7 @@ class WeatherPredictionHandler(ABC):
 
 
 class WideWeatherPrediction(WeatherPredictionHandler):
+    # TODO: required to chek after refactoring
     """
     Transform a dataset into 4 weather predictions.
     Each time stamp has 1 to 4 forecasts.
@@ -46,7 +46,7 @@ class WideWeatherPrediction(WeatherPredictionHandler):
     @classmethod
     def get_df(cls, df: pd.DataFrame, params: dict) -> pd.DataFrame:
         df = df.copy()
-        df_list = []
+        dfs_list: list[pd.DataFrame] = []
         date_col = params["date_col"]
         for col in params["cols_to_transform"]:
             df_pivoted = df.pivot_table(
@@ -55,8 +55,8 @@ class WideWeatherPrediction(WeatherPredictionHandler):
                 values=col,
                 aggfunc="sum",
             ).add_prefix(col + "_")
-            df_list.append(df_pivoted)
-        df_res = pd.concat(df_list, axis=1)
+            dfs_list.append(df_pivoted)
+        df_res = pd.concat(dfs_list, axis=1)
         return df_res.reset_index() if params["reset_index"] else df_res
 
 
@@ -150,6 +150,7 @@ class FreshWeatherPrediction(WeatherPredictionHandler):
 
 
 class AggregatedWeatherPrediction(WeatherPredictionHandler):
+    # TODO: required to chek after refactoring
     # TODO: class a bit forgotten because others better for the task
     """
     Give a new df with aggregated predictions
@@ -306,8 +307,8 @@ class AggregatedWeatherPrediction(WeatherPredictionHandler):
                 "2012-06-21 01:00:00": 8.230,
                 "2012-06-25 00:00:00": 4.910,
             }  # Last date for test
-            for key in mean_dict:
-                diff = abs(float(df[df.date == key]["ws"]) - mean_dict[key])
+            for key, values in mean_dict.items():
+                diff = abs(float(df[df.date == key]["ws"]) - values)
                 if not diff < 0.01:
                     raise AssertionError(
                         f"Values are different for ws column for date"

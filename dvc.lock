@@ -25,14 +25,14 @@ stages:
       md5: 0386eb3f967332072dba136b08062867
       size: 32784950
     - path: src/data/aggregate_weather.py
-      md5: 88727d8d8ba091f42e5249196626e806
-      size: 4660
+      md5: dd562525027615512e9a9615bb790f18
+      size: 4654
     - path: src/data/aggregate_weather_config.py
       md5: 220ecb13ca44fc48bf3222c25aa8a566
       size: 2983
     - path: src/data/process_weather.py
-      md5: df857812df9239f6f9242875b545309b
-      size: 11985
+      md5: fae4306ed80ad3a543fa77382224d0b1
+      size: 12102
     outs:
     - path: data/interim/data_agg_weather.csv
       md5: a02ba664e8205ba7bdba73cf2b2f6bcd
@@ -44,9 +44,32 @@ stages:
       md5: a02ba664e8205ba7bdba73cf2b2f6bcd
       size: 8439585
     - path: src/data/clip_outliers.py
-      md5: af73526d35f79e886e370720ba03c396
-      size: 4520
+      md5: 9f139e76303681bac52baa8898879797
+      size: 4525
     outs:
     - path: data/interim/data_clipped.csv
       md5: f11b0f834795e6307eca9caf13ad10f1
       size: 8523534
+  create_features:
+    cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/features/create_features.py
+      data/interim/data_clipped.csv data/interim/data_featured.csv
+    deps:
+    - path: data/interim/data_clipped.csv
+      md5: f11b0f834795e6307eca9caf13ad10f1
+      size: 8523534
+    - path: src/features/create_features.py
+      md5: 3da31ff9cb6fc819803fb425c1c9d705
+      size: 9416
+    - path: src/features/create_features_config.py
+      md5: 85934baa3c7d2ad2a8215363f38577a3
+      size: 4531
+    - path: src/features/math_functions.py
+      md5: 13a54faaf4b114a43405a2aa83b318b1
+      size: 4914
+    - path: src/features/process_features.py
+      md5: d3492b0a8c6b9e7438dee2f77700b2ca
+      size: 18186
+    outs:
+    - path: data/interim/data_featured.csv
+      md5: b6263f21adc8009dbae47e6b6ae9506c
+      size: 111721549
