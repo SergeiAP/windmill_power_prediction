@@ -29,3 +29,22 @@ plot_exploratory:
     kind: reg
     diag_kind: kde
     alpha: 0.3
+plot_feature_importance:
+  features: all
+  features_exc: [date]
+  windfarm_col: windfarm
+  get_permeation_importance:
+    is_on: True
+    n_repeats: 10
+    train_test_cfg:
+      test_size: 0.25
+      shuffle: True
+    random_forest_cfg:
+      min_samples_leaf: 48
+  plot_power_prediciton:
+    is_on: True
+    whiskers_len: 10
+  plot_params:
+    set_plot_params: True
+    figsize: [30, 15]
+    fontsize: 14

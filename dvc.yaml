@@ -52,3 +52,15 @@ stages:
       - reports/exp_figures/:
           persist: True
           cache: False
+  plot_feature_importances:
+    cmd: ${common.root} && python src/visualization/plot_feature_importance.py data/processed/data_featured.csv reports/imp_figures/
+    params:
+      - ${common.config}:
+        - plot_feature_importance
+    deps:
+      - data/processed/data_featured.csv
+      - src/visualization/plot_feature_importance.py 
+    outs:
+      - reports/imp_figures/:
+          persist: True
+          cache: False
