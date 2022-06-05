@@ -1,6 +1,7 @@
 vars:
   - common:
-      root: "./" 
+      root: set PYTHONPATH=%PYTHONPATH%;./
+      config: src/config.yml
 stages:
   merge_data:
     cmd: python src/data/merge_data.py data/raw/ data/interim/data_test_labels.csv data/interim/data_train.csv
@@ -11,7 +12,7 @@ stages:
       - data/interim/data_test_labels.csv
       - data/interim/data_train.csv
   aggregate_weather:
-    cmd: python src/data/aggregate_weather.py data/interim/data_train.csv data/interim/data_agg_weather.csv
+    cmd: ${common.root} && python src/data/aggregate_weather.py data/interim/data_train.csv data/interim/data_agg_weather.csv
     deps:
       - data/interim/data_train.csv
       - src/data/aggregate_weather.py
@@ -20,14 +21,17 @@ stages:
     outs:
       - data/interim/data_agg_weather.csv
   clip_data:
-    cmd: python src/data/clip_outliers.py data/interim/data_agg_weather.csv data/interim/data_clipped.csv
+    cmd: ${common.root} && python src/data/clip_outliers.py data/interim/data_agg_weather.csv data/interim/data_clipped.csv
+    params:
+      - ${common.config}:
+        - clip_outliers
     deps:
       - data/interim/data_agg_weather.csv
       - src/data/clip_outliers.py
     outs:
       - data/interim/data_clipped.csv
   create_features:
-    cmd: set PYTHONPATH=%PYTHONPATH%;${common.root} && python src/features/create_features.py data/interim/data_clipped.csv data/interim/data_featured.csv
+    cmd: ${common.root} && python src/features/create_features.py data/interim/data_clipped.csv data/processed/data_featured.csv
     deps:
       - data/interim/data_clipped.csv
       - src/features/create_features.py
@@ -35,4 +39,16 @@ stages:
       - src/features/math_functions.py
       - src/features/process_features.py
     outs:
-      - data/interim/data_featured.csv
+      - data/processed/data_featured.csv
+  plot_exploratory:
+    cmd: ${common.root} && python src/visualization/plot_exploratory.py data/processed/data_featured.csv reports/exp_figures/
+    params:
+      - ${common.config}:
+        - plot_exploratory
+    deps:
+      - data/processed/data_featured.csv
+      - src/visualization/plot_exploratory.py 
+    outs:
+      - reports/exp_figures/:
+          persist: True
+          cache: False

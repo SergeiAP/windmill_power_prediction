@@ -1,11 +1,31 @@
 common:
   seed: 42
+  target: wp
 
 clip_outliers:
+  clip_strategy: quantile_clip
   quantile_clip:
     exclude: [date, hors, hour, wd, month, wp, windfarm]
     lower: 0.05
     upper: 0.95
   iqr_clip:
-    exclude: ['date', 'hors', 'hour', 'wd', 'wp', 'windfarm']
-  
+    exclude: [date, hors, hour, wd, wp, windfarm]
+plot_exploratory:
+  features: [windfarm, hour, ws, wd_sin, wd_cos, side, ws-wd_cos, ws_frac, ws_log, ws_med24, ws_l3, ws_l12] # all
+  features_exc: []
+  set_plot_params:
+    is_on: True
+  plot_corr_matrix:
+    is_on: True
+    cat_col: windfarm
+    figsize: [30, 15]
+    fontsize: 14
+  plot_boxplot:
+    is_on: True
+    is_standardized: True
+  plot_pairplot:
+    is_on: False
+    hue_col: windfarm
+    kind: reg
+    diag_kind: kde
+    alpha: 0.3

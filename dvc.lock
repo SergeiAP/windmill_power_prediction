@@ -19,50 +19,75 @@ stages:
       md5: 0386eb3f967332072dba136b08062867
       size: 32784950
   aggregate_weather:
-    cmd: python src/data/aggregate_weather.py data/interim/data_train.csv data/interim/data_agg_weather.csv
+    cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/data/aggregate_weather.py data/interim/data_train.csv
+      data/interim/data_agg_weather.csv
     deps:
     - path: data/interim/data_train.csv
       md5: 0386eb3f967332072dba136b08062867
       size: 32784950
     - path: src/data/aggregate_weather.py
-      md5: dd562525027615512e9a9615bb790f18
-      size: 4654
+      md5: 9988031f1f3780ca91970afdeb0add7f
+      size: 4691
     - path: src/data/aggregate_weather_config.py
       md5: 220ecb13ca44fc48bf3222c25aa8a566
       size: 2983
     - path: src/data/process_weather.py
-      md5: fae4306ed80ad3a543fa77382224d0b1
-      size: 12102
+      md5: 5b70c5c67b5211222364d51c65b9ced7
+      size: 12005
     outs:
     - path: data/interim/data_agg_weather.csv
       md5: a02ba664e8205ba7bdba73cf2b2f6bcd
       size: 8439585
   clip_data:
-    cmd: python src/data/clip_outliers.py data/interim/data_agg_weather.csv data/interim/data_clipped.csv
+    cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/data/clip_outliers.py data/interim/data_agg_weather.csv
+      data/interim/data_clipped.csv
     deps:
     - path: data/interim/data_agg_weather.csv
       md5: a02ba664e8205ba7bdba73cf2b2f6bcd
       size: 8439585
     - path: src/data/clip_outliers.py
-      md5: 9f139e76303681bac52baa8898879797
-      size: 4525
+      md5: 3ab35a574187b84d322a506212a0cb9a
+      size: 4457
+    params:
+      src/config.yml:
+        clip_outliers:
+          clip_strategy: quantile_clip
+          quantile_clip:
+            exclude:
+            - date
+            - hors
+            - hour
+            - wd
+            - month
+            - wp
+            - windfarm
+            lower: 0.05
+            upper: 0.95
+          iqr_clip:
+            exclude:
+            - date
+            - hors
+            - hour
+            - wd
+            - wp
+            - windfarm
     outs:
     - path: data/interim/data_clipped.csv
       md5: f11b0f834795e6307eca9caf13ad10f1
       size: 8523534
   create_features:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/features/create_features.py
-      data/interim/data_clipped.csv data/interim/data_featured.csv
+      data/interim/data_clipped.csv data/processed/data_featured.csv
     deps:
     - path: data/interim/data_clipped.csv
       md5: f11b0f834795e6307eca9caf13ad10f1
       size: 8523534
     - path: src/features/create_features.py
-      md5: 3da31ff9cb6fc819803fb425c1c9d705
-      size: 9416
+      md5: 28606524a00146c780e69af449c1db0b
+      size: 10682
     - path: src/features/create_features_config.py
-      md5: 85934baa3c7d2ad2a8215363f38577a3
-      size: 4531
+      md5: 275e020e66046b9f51be54d421c0fd43
+      size: 4607
     - path: src/features/math_functions.py
       md5: 13a54faaf4b114a43405a2aa83b318b1
       size: 4914
@@ -70,6 +95,95 @@ stages:
       md5: d3492b0a8c6b9e7438dee2f77700b2ca
       size: 18186
     outs:
-    - path: data/interim/data_featured.csv
+    - path: data/processed/data_featured.csv
       md5: b6263f21adc8009dbae47e6b6ae9506c
       size: 111721549
+  plot_exploratory:
+    cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/visualization/plot_exploratory.py
+      data/processed/data_featured.csv reports/exp_figures/
+    deps:
+    - path: data/processed/data_featured.csv
+      md5: b6263f21adc8009dbae47e6b6ae9506c
+      size: 111721549
+    - path: src/visualization/plot_exploratory.py
+      md5: c622a3680dd845aeeb417a977d1ea06d
+      size: 9129
+    params:
+      src/config.yml:
+        plot_exploratory:
+          features:
+          - windfarm
+          - hour
+          - ws
+          - wd_sin
+          - wd_cos
+          - side
+          - ws-wd_cos
+          - ws_frac
+          - ws_log
+          - ws_med24
+          - ws_l3
+          - ws_l12
+          features_exc: []
+          set_plot_params:
+            is_on: true
+          plot_corr_matrix:
+            is_on: true
+            cat_col: windfarm
+            figsize:
+            - 30
+            - 15
+            fontsize: 14
+          plot_boxplot:
+            is_on: true
+            is_standardized: true
+          plot_pairplot:
+            is_on: false
+            hue_col: windfarm
+            kind: reg
+            diag_kind: kde
+            alpha: 0.3
+    outs:
+    - path: reports/exp_figures/
+      md5: 2a85b71f1a18ffb0501e61c195aba30f.dir
+      size: 2508858
+      nfiles: 4
+  plot_feature_importances:
+    cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/visualization/plot_feature_importance.py
+      data/processed/data_featured.csv reports/imp_figures/
+    deps:
+    - path: data/processed/data_featured.csv
+      md5: b6263f21adc8009dbae47e6b6ae9506c
+      size: 111721549
+    - path: src/visualization/plot_feature_importance.py
+      md5: a435c3f0fe6424696b63bb8f4b05cad7
+      size: 5673
+    params:
+      src/config.yml:
+        plot_feature_importance:
+          features: all
+          features_exc:
+          - date
+          windfarm_col: windfarm
+          get_permeation_importance:
+            is_on: true
+            n_repeats: 10
+            train_test_cfg:
+              test_size: 0.25
+              shuffle: true
+            random_forest_cfg:
+              min_samples_leaf: 48
+          plot_power_prediciton:
+            is_on: true
+            whiskers_len: 10
+          plot_params:
+            set_plot_params: true
+            figsize:
+            - 30
+            - 15
+            fontsize: 14
+    outs:
+    - path: reports/imp_figures/
+      md5: ac0ad0a2fef97a1073a250b832dd7b1c.dir
+      size: 637257
+      nfiles: 2
