@@ -1,14 +1,9 @@
 # pylint: disable=missing-module-docstring
 # to import modules from src
-import sys
-
 from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 
-# pylint: disable=wrong-import-position
-ROOT_FOLDER = "./"
-sys.path.append(ROOT_FOLDER)
 from src.read_config import get_data_config
 
 

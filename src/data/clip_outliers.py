@@ -1,18 +1,9 @@
 # pylint: disable=missing-module-docstring
-# pylint: disable=wrong-import-position
-import sys
-
-ROOT_FOLDER = "./"
-sys.path.append(ROOT_FOLDER)
-
 import copy
 
 import click
 import pandas as pd
 from src.read_config import get_data_config
-
-
-CLIP_STRATEGY = 'quantile_clip'
 
 
 class ClipOtliers:
@@ -122,8 +113,9 @@ def run_clip_outliers(input_filepath: str, output_filepath: str) -> None:
         output_filepath (str): path to save dataset with clipped dataset
     """
     # read section
-    (clip_params,) = get_data_config('clip_outliers', [CLIP_STRATEGY])
-    clip_params.update({'fun': CLIP_STRATEGY})
+    (clip_strategy,) = get_data_config('clip_outliers', ['clip_strategy'])
+    (clip_params,) = get_data_config('clip_outliers', [clip_strategy])
+    clip_params.update({'fun': clip_strategy})
     df = pd.read_csv(input_filepath)
     
     df = ClipOtliers(clip_params).get_dfs(df=df)
