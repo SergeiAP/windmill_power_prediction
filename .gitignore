@@ -77,8 +77,14 @@ target/
 
 # exclude data from source control by default
 /data/
-/reports/exp_figures/
-/reports/imp_figures/
+
+# exclude artifacts - plots
+/reports/figures/exploratory/*
+/reports/figures/importance/*
+/reports/figures/hyperparams/*
+!/reports/figures/exploratory/.gitkeep
+!/reports/figures/importance/.gitkeep
+!/reports/figures/hyperparams/.gitkeep
 
 # Mac OS-specific storage files
 .DS_Store

@@ -41,7 +41,7 @@ stages:
     outs:
       - data/processed/data_featured.csv
   plot_exploratory:
-    cmd: ${common.root} && python src/visualization/plot_exploratory.py data/processed/data_featured.csv reports/exp_figures/
+    cmd: ${common.root} && python src/visualization/plot_exploratory.py data/processed/data_featured.csv reports/figures/exploratory/
     params:
       - ${common.config}:
         - plot_exploratory
@@ -49,11 +49,11 @@ stages:
       - data/processed/data_featured.csv
       - src/visualization/plot_exploratory.py 
     outs:
-      - reports/exp_figures/:
+      - reports/figures/exploratory/:
           persist: True
           cache: False
   plot_feature_importances:
-    cmd: ${common.root} && python src/visualization/plot_feature_importance.py data/processed/data_featured.csv reports/imp_figures/
+    cmd: ${common.root} && python src/visualization/plot_feature_importance.py data/processed/data_featured.csv reports/figures/importance/
     params:
       - ${common.config}:
         - plot_feature_importance
@@ -61,6 +61,6 @@ stages:
       - data/processed/data_featured.csv
       - src/visualization/plot_feature_importance.py 
     outs:
-      - reports/imp_figures/:
+      - reports/figures/importance/:
           persist: True
           cache: False

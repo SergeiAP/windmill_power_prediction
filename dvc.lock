@@ -100,31 +100,32 @@ stages:
       size: 111721549
   plot_exploratory:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/visualization/plot_exploratory.py
-      data/processed/data_featured.csv reports/exp_figures/
+      data/processed/data_featured.csv reports/figures/exploratory/
     deps:
     - path: data/processed/data_featured.csv
       md5: b6263f21adc8009dbae47e6b6ae9506c
       size: 111721549
     - path: src/visualization/plot_exploratory.py
-      md5: c622a3680dd845aeeb417a977d1ea06d
-      size: 9129
+      md5: 353469e66564411f9e9c41f2195c9f7b
+      size: 7923
     params:
       src/config.yml:
         plot_exploratory:
           features:
-          - windfarm
-          - hour
-          - ws
-          - wd_sin
-          - wd_cos
-          - side
-          - ws-wd_cos
-          - ws_frac
-          - ws_log
-          - ws_med24
-          - ws_l3
-          - ws_l12
-          features_exc: []
+            include:
+            - windfarm
+            - hour
+            - ws
+            - wd_sin
+            - wd_cos
+            - side
+            - ws-wd_cos
+            - ws_frac
+            - ws_log
+            - ws_med24
+            - ws_l3
+            - ws_l12
+            exclude: []
           set_plot_params:
             is_on: true
           plot_corr_matrix:
@@ -144,35 +145,36 @@ stages:
             diag_kind: kde
             alpha: 0.3
     outs:
-    - path: reports/exp_figures/
-      md5: 2a85b71f1a18ffb0501e61c195aba30f.dir
-      size: 2508858
-      nfiles: 4
+    - path: reports/figures/exploratory/
+      md5: f5c8d03c9c5d74ebb836b57d0b050d42.dir
+      size: 2508251
+      nfiles: 5
   plot_feature_importances:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/visualization/plot_feature_importance.py
-      data/processed/data_featured.csv reports/imp_figures/
+      data/processed/data_featured.csv reports/figures/importance/
     deps:
     - path: data/processed/data_featured.csv
       md5: b6263f21adc8009dbae47e6b6ae9506c
       size: 111721549
     - path: src/visualization/plot_feature_importance.py
-      md5: a435c3f0fe6424696b63bb8f4b05cad7
-      size: 5673
+      md5: 3f0b93d5cf4e441eb3368a8ab223a0ec
+      size: 7618
     params:
       src/config.yml:
         plot_feature_importance:
-          features: all
-          features_exc:
-          - date
+          features:
+            include: all
+            exclude:
+            - date
           windfarm_col: windfarm
-          get_permeation_importance:
+          get_permutation_importance:
             is_on: true
             n_repeats: 10
             train_test_cfg:
               test_size: 0.25
               shuffle: true
             random_forest_cfg:
-              min_samples_leaf: 48
+              min_samples_leaf: 10
           plot_power_prediciton:
             is_on: true
             whiskers_len: 10
@@ -181,9 +183,9 @@ stages:
             figsize:
             - 30
             - 15
-            fontsize: 14
+            fontsize:
     outs:
-    - path: reports/imp_figures/
-      md5: ac0ad0a2fef97a1073a250b832dd7b1c.dir
-      size: 637257
-      nfiles: 2
+    - path: reports/figures/importance/
+      md5: f77d0e51b3d05717a7c8a675896d315c.dir
+      size: 580385
+      nfiles: 3

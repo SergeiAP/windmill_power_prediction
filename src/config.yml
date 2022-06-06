@@ -11,8 +11,9 @@ clip_outliers:
   iqr_clip:
     exclude: [date, hors, hour, wd, wp, windfarm]
 plot_exploratory:
-  features: [windfarm, hour, ws, wd_sin, wd_cos, side, ws-wd_cos, ws_frac, ws_log, ws_med24, ws_l3, ws_l12] # all
-  features_exc: []
+  features:
+    include: [windfarm, hour, ws, wd_sin, wd_cos, side, ws-wd_cos, ws_frac, ws_log, ws_med24, ws_l3, ws_l12] # all
+    exclude: []
   set_plot_params:
     is_on: True
   plot_corr_matrix:
@@ -30,21 +31,22 @@ plot_exploratory:
     diag_kind: kde
     alpha: 0.3
 plot_feature_importance:
-  features: all
-  features_exc: [date]
+  features:
+    include: all
+    exclude: [date]
   windfarm_col: windfarm
-  get_permeation_importance:
+  get_permutation_importance:
     is_on: True
     n_repeats: 10
     train_test_cfg:
       test_size: 0.25
       shuffle: True
     random_forest_cfg:
-      min_samples_leaf: 48
+      min_samples_leaf: 10
   plot_power_prediciton:
     is_on: True
     whiskers_len: 10
   plot_params:
     set_plot_params: True
     figsize: [30, 15]
-    fontsize: 14
+    fontsize:

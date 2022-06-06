@@ -11,31 +11,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from pylab import rcParams  # type: ignore
+
+from plot_utils import save_plot, set_plot_params # pylint: disable=import-error
 from src.read_config import get_data_config
-
-
-def set_plot_params(figsize: tuple[int, int] = (20, 10)) -> None:
-    """Set default params for better plot representation
-
-    Args:
-        figsize (tuple[int, int]): default size of plots
-    """
-
-    small_size = 16
-    medium_size = 18
-    bigger_size = 20
-
-    rcParams['font.size'] = small_size          # controls default text sizes
-    rcParams['axes.titlesize'] = small_size     # fontsize of the axes title
-    rcParams['axes.labelsize'] = medium_size    # fontsize of the x and y labels
-    rcParams['xtick.labelsize'] = small_size    # fontsize of the tick labels
-    rcParams['ytick.labelsize'] = small_size    # fontsize of the tick labels
-    rcParams['legend.fontsize'] = small_size    # legend fontsize
-    rcParams['figure.titlesize'] = bigger_size  # fontsize of the figure title
-    
-    rcParams['figure.figsize'] = figsize
-    plt.set_loglevel('WARNING') # type: ignore
-    sns.set_theme()
 
 
 def plot_corr_matrix(df: pd.DataFrame,
@@ -54,7 +32,7 @@ def plot_corr_matrix(df: pd.DataFrame,
         figsize (tuple, optional): size of the plot. Defaults to (20, 10).
 
     Returns:
-        mlp_axes_subplot.AxesSubplot: matplotlib axis
+        mpl_axes.Axes: matplotlib axis
     """
     plt.figure(figsize=figsize)
     # To show one half only
@@ -80,10 +58,10 @@ def plot_categorical_corr_matrix(df: pd.DataFrame,
         df (pd.DataFrame): data with `cat_col`
         cat_col (str): column with categorical feature to create it's own corr_matrix
         figsize (tuple, optional): one subplot size. Defaults to (30, 10).
-        fontsize (int, optional): fontsize for corr calue. Defaults to 14.
+        fontsize (int, optional): fontsize for corr value. Defaults to 14.
 
     Returns:
-        mpl_figure.Figure: correlation matrixes
+        mpl_figure.Figure: correlation matrixes to save
     """
     categories = df[cat_col].unique()
     figsize_all = (figsize[0], figsize[1]*len(categories))
@@ -112,12 +90,13 @@ def plot_boxplot(df: pd.DataFrame,
         figsize (tuple, optional): Size of the picture. Defaults to (20, 10).
 
     Returns:
-        mpl_figure.Figure: matplotlib figure
+        mpl_figure.Figure: matplotlib figure to save
     """
     if is_standardized:
         df = df.select_dtypes(include=np.number) # type: ignore
         df = (df - df.mean(axis="index")) / df.std(axis="index")
     fig, ax = plt.subplots(figsize=figsize)
+    fig.subplots_adjust(bottom=0.2)
     ax.tick_params(axis='x', rotation=45)
     ax = sns.boxplot(data=df, notch=True, ax=ax)
     return fig
@@ -138,7 +117,7 @@ def plot_pairplot(df: pd.DataFrame,
         alpha (float, optional): transparency of elements. Defaults to 0.3.
 
     Returns:
-        sns.axisgrid.PairGrid: seaborn pairplot
+        sns.axisgrid.PairGrid: seaborn pairplot to save
     """
     pairplot = sns.pairplot(df,
                             hue=hue_col, 
@@ -150,26 +129,11 @@ def plot_pairplot(df: pd.DataFrame,
     return pairplot
 
 
-def save_plot(figure: mpl_figure.Figure | sns.axisgrid.PairGrid | mpl_axes.Axes,
-              figname: str | Path):
-    """Save figure
-
-    Args:
-        figure (mpl_figure.Figure | sns.axisgrid.PairGrid | mpl_axes.Axes): what to 
-        save
-        figname (str | Path): path to save
-    """
-    fig = (figure.get_figure() if not isinstance(figure, sns.axisgrid.PairGrid) 
-           else figure)
-    fig.savefig(figname)
-    print(f"Save plot as {figname}")
-
-
 @click.command()
 @click.argument("input_filepath", type=click.Path(exists=True))
 @click.argument("output_folder", type=click.Path())
 def run_exploratory_plots(input_filepath: str, output_folder: str) -> None:
-    """Create new features in clipped dataset
+    """Run exploratory analysis in the dataset `input_filepath`
 
     Args:
         input_filepath (str): path to dataset with features
@@ -191,10 +155,12 @@ def run_exploratory_plots(input_filepath: str, output_folder: str) -> None:
           "plot_boxplot",
           "plot_pairplot"]
     )
+    features: dict = features
     (target, ) = get_data_config("common", ["target"])
      
     # target is last column
-    df = (df.loc[:, features + [target]] if isinstance(features, list) else 
+    df = (df.loc[:, features["include"] + [target]] 
+          if isinstance(features["include"], list) else 
           df.loc[:, df.columns.drop(target).to_list() + [target]])
     
     # TODO: make several if's using dict and list of required plots
