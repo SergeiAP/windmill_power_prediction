@@ -1,6 +1,7 @@
 common:
   seed: 42
   target: wp
+  date_col: date
 
 clip_outliers:
   clip_strategy: quantile_clip
@@ -10,6 +11,13 @@ clip_outliers:
     upper: 0.95
   iqr_clip:
     exclude: [date, hors, hour, wd, wp, windfarm]
+split_train_predict:
+  train_rows:
+    dates: ['2009-07-02 13:00:00', '2012-06-25 00:00:00' ]
+    is_na: False
+  predict_rows:
+    dates: ['2011-01-01 01:00:00', '2012-06-25 00:00:00' ]
+    is_na: True
 plot_exploratory:
   features:
     include: [windfarm, hour, ws, wd_sin, wd_cos, side, ws-wd_cos, ws_frac, ws_log, ws_med24, ws_l3, ws_l12] # all
@@ -50,3 +58,44 @@ plot_feature_importance:
     set_plot_params: True
     figsize: [30, 15]
     fontsize:
+explore_train_model:
+  features:
+    include: all # all or [...]
+    exclude: [slag_recieving_group, distance]
+  set_plot_params:
+    is_on: True
+  linear_model:
+   cat_cols: [line_num]
+   model_params:
+    feature_selector__threshold: "1.0*median"
+    feature_selector__estimator__min_samples_leaf: 10
+    model__fit_intercept: True
+    model__alpha: 30
+  params_search:
+    is_on: True
+    grid_params:
+      n_splits: 10
+      scoring: neg_mean_absolute_percentage_error
+      model__alpha:
+        - func
+        - [log, -3, 3, 25] # np.logspace(-3, 3, num=25)
+      feature_selector__threshold:
+        - vals
+        - ["0.2*median", "0.4*median", "0.6*median", "0.8*median", "1.0*median", "1.1*median"]
+    cv_params:
+      n_splits: 10
+      return_train_score: True
+      scoring:
+        MAPE: neg_mean_absolute_percentage_error
+        MSE: neg_mean_squared_error
+        MAE: neg_mean_absolute_error
+    plot_param_search:
+      scoring: "test_MAPE"
+      x_axis: "model__alpha"
+      hover_cols: ["test_MAPE"] # +grid_params
+      figsize: [20, 10]
+  plot_learning_curve:
+    is_on: True
+    scoring: neg_mean_absolute_percentage_error
+    figsize: [20, 10]
+    n_splits: 10

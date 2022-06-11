@@ -31,7 +31,7 @@ stages:
     outs:
       - data/interim/data_clipped.csv
   create_features:
-    cmd: ${common.root} && python src/features/create_features.py data/interim/data_clipped.csv data/processed/data_featured.csv
+    cmd: ${common.root} && python src/features/create_features.py data/interim/data_clipped.csv data/interim/data_featured.csv
     deps:
       - data/interim/data_clipped.csv
       - src/features/create_features.py
@@ -39,26 +39,39 @@ stages:
       - src/features/math_functions.py
       - src/features/process_features.py
     outs:
-      - data/processed/data_featured.csv
+      - data/interim/data_featured.csv
+  split_train_predict:
+    cmd: ${common.root} && python src/data/split_train_predict.py data/interim/data_featured.csv data/processed/data_train.csv data/processed/data_predict.csv
+    params:
+      - ${common.config}:
+        - split_train_predict
+        - common.target
+        - common.date_col
+    deps:
+      - data/interim/data_featured.csv
+      - src/data/split_train_predict.py
+    outs:
+      - data/processed/data_train.csv
+      - data/processed/data_predict.csv
   plot_exploratory:
-    cmd: ${common.root} && python src/visualization/plot_exploratory.py data/processed/data_featured.csv reports/figures/exploratory/
+    cmd: ${common.root} && python src/visualization/plot_exploratory.py data/processed/data_train.csv reports/figures/exploratory/
     params:
       - ${common.config}:
         - plot_exploratory
     deps:
-      - data/processed/data_featured.csv
+      - data/processed/data_train.csv
       - src/visualization/plot_exploratory.py 
     outs:
       - reports/figures/exploratory/:
           persist: True
           cache: False
   plot_feature_importances:
-    cmd: ${common.root} && python src/visualization/plot_feature_importance.py data/processed/data_featured.csv reports/figures/importance/
+    cmd: ${common.root} && python src/visualization/plot_feature_importance.py data/processed/data_train.csv reports/figures/importance/
     params:
       - ${common.config}:
         - plot_feature_importance
     deps:
-      - data/processed/data_featured.csv
+      - data/processed/data_train.csv
       - src/visualization/plot_feature_importance.py 
     outs:
       - reports/figures/importance/:
