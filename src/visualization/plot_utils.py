@@ -2,6 +2,7 @@
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+from plotly.graph_objs._figure import Figure as plotly_Figure
 import matplotlib.axes as mpl_axes
 import matplotlib.figure as mpl_figure
 import seaborn as sns
@@ -32,8 +33,9 @@ def set_plot_params(figsize: tuple[int, int] = (20, 10)) -> None:
     sns.set_theme()
 
 
-def save_plot(figure: mpl_figure.Figure | sns.axisgrid.PairGrid | mpl_axes.Axes,
-              figname: str | Path) -> None:
+def save_plot(
+    figure: mpl_figure.Figure | sns.axisgrid.PairGrid | mpl_axes.Axes | plotly_Figure,
+    figname: str | Path) -> None:
     """Save figure
 
     Args:
@@ -41,7 +43,11 @@ def save_plot(figure: mpl_figure.Figure | sns.axisgrid.PairGrid | mpl_axes.Axes,
         save
         figname (str | Path): path to save
     """
-    fig = (figure.get_figure() if not isinstance(figure, sns.axisgrid.PairGrid) 
-           else figure)
-    fig.savefig(figname)
+    match figure:
+        case sns.axisgrid.PairGrid():
+            figure.savefig(figname)
+        case mpl_figure.Figure() | mpl_axes.Axes():
+            figure.get_figure().savefig(figname)
+        case plotly_Figure():
+            figure.write_html(figname)
     print(f"Save plot as {figname}")

@@ -1,9 +1,11 @@
 # pylint: disable=missing-module-docstring
 # TODO: change print to logs
+# TODO: split file
 import copy
-import pickle
+import pickle  # nosec B403
 import time
 from pathlib import Path
+from typing import Iterable
 
 import click
 import matplotlib.pyplot as plt
@@ -16,7 +18,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import Ridge
-from sklearn.metrics import mean_absolute_percentage_error
+from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import (GridSearchCV, ShuffleSplit,
                                      cross_validate, learning_curve)
 from sklearn.pipeline import Pipeline
@@ -31,6 +33,19 @@ def linear_model(df_cols: list[str],
                  random_state: int,
                  **model_params
                  ) -> Pipeline:
+    """
+    Create linear model pipeline with `cat`, `num` preprocessing and `SelectFromModel`
+
+    Args:
+        df_cols (list[str]): dataframe features
+        cat_cols (list[str]): categorical features
+        random_state (int): random seed
+
+    Returns:
+        Pipeline: sklearn model
+    """
+    # TODO: implement OneLeaveGroupOut as cv
+    
     num_cols = [col for col in df_cols if col not in cat_cols]
     preprocessor = ColumnTransformer(
     transformers = [
@@ -53,28 +68,37 @@ def linear_model(df_cols: list[str],
 def train_model(model: Pipeline,
                 data: pd.DataFrame,
                 target: pd.Series,
-                cast_lasts: str,
-                best_params: dict
+                best_params: dict[str, str | float]
                 ) -> tuple[Pipeline, pd.DataFrame]:
+    """Train model without testing on full dataset
+
+    Args:
+        model (Pipeline): model to be trained
+        data (pd.DataFrame): data for training
+        target (pd.Series): target
+        best_params (dict[str, str  |  float]): params for `model`
+
+    Returns:
+        tuple[Pipeline, pd.DataFrame]: trained model and `coefs` for linear model
+    """
     intercept = 0 # by default
-    real_intercept = 0 # by default
     
     model.set_params(**best_params)
     model.fit(data, target)
     
-    print(f"Train MAPE is: "
-          f"{mean_absolute_percentage_error(model.predict(data), target) * 100:.2f}%")
+    print(f"Train MAE is: "
+          f"{mean_absolute_error(target, model.predict(data)) * 100:.2f}%")
     # For linear models only
     
     if hasattr(model[-1], 'intercept_'):
-        real_intercept = model[-1].intercept_                            # type: ignore
-        intercept = model[-1].intercept_ / data[cast_lasts].median()     # type: ignore
+        intercept = model[-1].intercept_                            # type: ignore
     if hasattr(model[-1], 'coef_'):
         feature_names = np.append(model[:-1].get_feature_names_out(),    # type: ignore
-                                  ["intercept", "real_intercept"])
+                                  ["intercept"])
         coefs = pd.DataFrame(np.append(model[-1].coef_,                  # type: ignore
-                                       [intercept, real_intercept]), 
+                                       [intercept]), 
                             columns=['coefficients'], index=feature_names)
+        coefs.index.name = "feature_name" 
         return model, coefs
     return model, pd.DataFrame(None)
 
@@ -82,9 +106,26 @@ def train_model(model: Pipeline,
 def param_search(data: pd.DataFrame,
                  target: pd.Series,
                  model: Pipeline,
+                 n_jobs: int,
                  grid_params: dict,
                  cv_params: dict,
                  random_state: int) -> dict:
+    """Find best params for the `model` to be fitted then
+
+    Args:
+        data (pd.DataFrame): data with features for searhing
+        target (pd.Series): target
+        model (Pipeline): sklearn pipeline model
+        n_jobs (int): number of jobs/processors to be used in searching, 
+        -1 - all procesors
+        grid_params (dict): params for searching in `GridSearchCV`
+        cv_params (dict): params to be used in cross validation
+        random_state (int): random seed
+
+    Returns:
+        dict: cross_validation results
+    """
+    # TODO: change grid search to RandomSearch 
     grid_params = copy.deepcopy(grid_params)
     cv_params = copy.deepcopy(cv_params)
     
@@ -101,15 +142,27 @@ def param_search(data: pd.DataFrame,
                                 param_grid=grid_params,
                                 scoring=inner_scoring,
                                 cv=inner_cv,
-                                n_jobs=-1)
-    cv_results = cross_validate(regressor_cv, data, target,
-                                return_estimator=True, cv=outer_cv, n_jobs=-1,
+                                n_jobs=n_jobs)
+    cv_results = cross_validate(regressor_cv,
+                                data, 
+                                target,
+                                return_estimator=True, 
+                                cv=outer_cv, 
+                                n_jobs=n_jobs,
                                 **cv_params)
     
     print(f"Execution time is {round((time.time() - start_time) / 60, 2)} minutes")
     return cv_results
 
 def retrieve_grid_params(param_grid: dict) -> dict:
+    """Prepare grid search params for seaching best model params
+
+    Args:
+        param_grid (dict): params to be retrieved
+
+    Returns:
+        dict: retrieved params prepared to be used in `GridSearchCV`
+    """
     res_param_grid = copy.deepcopy(param_grid)
     for key, elem in param_grid.items():
         match elem[0]:
@@ -122,43 +175,72 @@ def retrieve_grid_params(param_grid: dict) -> dict:
                 res_param_grid[key] = elem[1]
     return res_param_grid
 
-def explore_param_search(cv_results: dict, scoring: str) -> tuple[pd.DataFrame, dict]:
-    """"""
+def explore_param_search(cv_results: dict,
+                         key_scoring: str,
+                         all_scores: Iterable[str],
+                         ) -> tuple[pd.DataFrame, dict[str, str | float]]:
+    """Explore params of inner and outer cross-validations
+
+    Args:
+        cv_results (dict): raw nested cross-validation results
+        key_scoring (str): scoring for `best_params` selection
+        all_scores (Iterable[str]): names of all scores to be stored
+
+    Returns:
+        tuple[pd.DataFrame, dict[str, str | float]]: all params params and key metrics
+        and best params combination
+    """
     # pepare dict for storing values
     grid_params = [key for key in cv_results["estimator"][0].best_params_.keys()]
     cv_exp = {key: [] for key in grid_params}
     cv_exp["index"] = []
-    cv_exp[scoring], cv_exp[f"{scoring}_splits"] = [], []
+    cv_exp[f"{key_scoring}_splits"] = []
+    for score in all_scores:
+        cv_exp[score] = [] 
 
-    cv_exp = prepare_param_serach(cv_exp, cv_results, scoring)
+    cv_exp = prepare_param_serach(cv_exp, cv_results, all_scores, key_scoring)
 
     # calc statistics for best models 
-    cv_exp[f"{scoring}_median"] = [round(np.median(vals), 5) 
-                                    for vals in cv_exp[f"{scoring}_splits"]]
-    cv_exp[f"{scoring}_std"] = [round(np.std(vals), 5) 
-                                   for vals in cv_exp[f"{scoring}_splits"]]
+    cv_exp[f"{key_scoring}_median"] = [round(np.median(vals), 5) 
+                                       for vals in cv_exp[f"{key_scoring}_splits"]]
+    cv_exp[f"{key_scoring}_std"] = [round(np.std(vals), 5) 
+                                    for vals in cv_exp[f"{key_scoring}_splits"]]
     
     # choose best model
     df_cv_exp = pd.DataFrame(cv_exp)
     # eval by model floor: median + std
-    estimate_val = df_cv_exp[f"{scoring}_median"] + cv_exp[f"{scoring}_std"]
-    df_cv_exp[f"{scoring}_eval"] = estimate_val
-    idx_min = df_cv_exp[f"{scoring}_eval"].argmin()
+    estimate_val = df_cv_exp[f"{key_scoring}_median"] + cv_exp[f"{key_scoring}_std"]
+    df_cv_exp[f"{key_scoring}_eval"] = estimate_val
+    idx_min = df_cv_exp[f"{key_scoring}_eval"].argmin()
     best_params = df_cv_exp.loc[idx_min, grid_params].to_dict()
 
-    print(f"Best characteristics evaluated by column {scoring}_eval is")
-    print(df_cv_exp.loc[df_cv_exp[f"{scoring}_eval"].argmin()])
+    print(f"Best characteristics evaluated by column {key_scoring}_eval is")
+    print(df_cv_exp.loc[df_cv_exp[f"{key_scoring}_eval"].argmin()])
     
     return df_cv_exp, best_params
 
+def prepare_param_serach(cv_params: dict,
+                         cv_results: dict,
+                         all_scores: Iterable[str],
+                         key_scoring: str) -> dict:
+    """Extract all required params and metrics from `cv_results`
 
-def prepare_param_serach(cv_params: dict, cv_results: dict, scoring: str) -> dict:
+    Args:
+        cv_params (dict): cross-validation 
+        cv_results (dict): cross-validation results to extract required params 
+        all_scores (Iterable[str]): all scores in `outer_cv` to be stored
+        key_scoring (str): scoring to be used for best model selection
+
+    Returns:
+        dict: prepared params and metrics from `cv_results`
+    """
     # gather best models
-    for estimator in cv_results["estimator"]:
+    for idx, estimator in enumerate(cv_results["estimator"]):
         for param, val in estimator.best_params_.items():
             cv_params[param].append(val)
         cv_params["index"].append(estimator.best_index_)
-        cv_params[scoring].append(round(-1 * estimator.best_score_, 5))
+        for score in all_scores:
+            cv_params[score].append(round(-1 * cv_results[score][idx], 5))
     
     # gather all scores for best models
     for idx in cv_params["index"]:
@@ -166,7 +248,7 @@ def prepare_param_serach(cv_params: dict, cv_results: dict, scoring: str) -> dic
         for estimator in cv_results["estimator"]:
             score_val = round(-1 * estimator.cv_results_["mean_test_score"][idx], 5)
             inner_scores.append(score_val)
-        cv_params[f"{scoring}_splits"].append(inner_scores)
+        cv_params[f"{key_scoring}_splits"].append(inner_scores)
     return cv_params
 
 
@@ -174,7 +256,17 @@ def plot_param_search(df_cv_exp: pd.DataFrame,
                       params_search_cfg: dict,
                       hover_cols: list[str],
                       ) -> plotly_Figure:
-    """"""
+    """Plot parameters search results with stabdart deviations and key parameters
+
+    Args:
+        df_cv_exp (pd.DataFrame): data to be plotted
+        params_search_cfg (dict): config for the plot
+        hover_cols (list[str]): columns and vals to be shown in plotly when hover at
+        point 
+
+    Returns:
+        plotly_Figure: plot with all info
+    """
     y_axis_name = params_search_cfg["plot_param_search"]["scoring"] + "_median"
     x_axis_name = params_search_cfg["plot_param_search"]["x_axis"]
     error_name = params_search_cfg["plot_param_search"]["scoring"] + "_std"
@@ -192,14 +284,29 @@ def plot_param_search(df_cv_exp: pd.DataFrame,
 def plot_learning_curve(data: pd.DataFrame,
                         target: pd.Series,
                         model: Pipeline,
-                        best_params: dict,
+                        best_params: dict[str, str | float],
                         plot_learning_curve_cfg: dict,
                         random_state: int,
                         ) -> mpl_figure:
-    """"""
+    """
+    Plot sklearn.model_selection.learning_curve based on fiited inside of the method
+    models
+
+    Args:
+        data (pd.DataFrame): data with features
+        target (pd.Series): target
+        model (Pipeline): model to be fitted and to plot learning curve
+        best_params (dict[str, str  |  float]): best model params to be used
+        plot_learning_curve_cfg (dict): config for learning_curve
+        random_state (int): seed
+
+    Returns:
+        mpl_figure: matplotlib figure - learning curve
+    """
     n_splits = plot_learning_curve_cfg["n_splits"]
     scoring = plot_learning_curve_cfg["scoring"]
     figsize = plot_learning_curve_cfg["figsize"]
+    n_jobs = plot_learning_curve_cfg["n_jobs"]
     
     outer_cv = ShuffleSplit(n_splits=n_splits, random_state=random_state)
     train_sizes = np.linspace(0.1, 1.0, num=10, endpoint=True)
@@ -210,7 +317,7 @@ def plot_learning_curve(data: pd.DataFrame,
                             train_sizes=train_sizes,
                             cv=outer_cv,
                             scoring=scoring,
-                            n_jobs=-1)
+                            n_jobs=n_jobs)
     train_size, train_scores, test_scores = results[:3]
     # Convert the scores into errors
     train_errors, test_errors = -1 * train_scores, -1 * test_scores
@@ -245,7 +352,8 @@ def run_tuning_eval_train(input_filepath: str,
     """
     start_time = time.time()
     features: dict
-    target: str
+    target_name: str
+    best_params: dict[str, str | float]
         
     # read section
     save_folder = Path(Path(".") / output_folder)
@@ -261,14 +369,19 @@ def run_tuning_eval_train(input_filepath: str,
           "params_search",
           "plot_learning_curve"]
     )
-    (target, seed, cast_lasts) = get_data_config("common",
-                                                 ["target_name", "seed", "cast_lasts"])
+    best_params = linear_model_cfg["model_params"]
+    scoring_names = ["test_" + metric_
+                     for metric_ in params_search_cfg["cv_params"]["scoring"].keys()]
+    (target_name, seed, date_col) = get_data_config("common",
+                                                    ["target", "seed", "date_col"])
     if set_plot_params_cfg["is_on"]:
         set_plot_params()
     
-    df_target: pd.Series = df.loc[:, target]
+    df = df.loc[(df[date_col] >= features["date_period"][0])
+                & (df[date_col] <= features["date_period"][1]), :]
+    df_target: pd.Series = df.loc[:, target_name]
     df = (df.loc[:, features["include"]] if isinstance(features["include"], list) else 
-          (df.loc[:, df.columns.drop(target).to_list()]))
+          (df.loc[:, df.columns.drop(target_name).to_list()]))
     data = df.drop(features["exclude"], axis="columns")
     
     model = linear_model(data.columns.to_list(),
@@ -279,32 +392,34 @@ def run_tuning_eval_train(input_filepath: str,
     if params_search_cfg["is_on"]:
     
         cv_results = param_search(data, df_target, model,
+                                  params_search_cfg["n_jobs"],
                                   params_search_cfg["grid_params"],
                                   params_search_cfg["cv_params"],
                                   seed)
         df_cv_exp, best_params = explore_param_search(
-            cv_results, params_search_cfg["plot_param_search"]["scoring"])
-        df_cv_exp.to_csv(save_folder / "cv_result.csv")
+            cv_results,
+            params_search_cfg["plot_param_search"]["scoring"],
+            scoring_names,
+            )
+        df_cv_exp.to_csv(save_folder / "cv_result.csv", index=False)
         print(f"Save cross-validation exploration results "
               f"as {save_folder / 'cv_result.csv'}")
         
         cv_plot = plot_param_search(df_cv_exp, params_search_cfg, [*best_params])
-        save_plot(cv_plot, save_folder / "cv_plot.html")
+        save_plot(cv_plot, save_folder / "cv_plot.html") 
     
     if plot_learning_curve_cfg["is_on"]:
-        lc_plot = plot_learning_curve(data, df_target,
-                                      model,
-                                      best_params, # type: ignore 
+        lc_plot = plot_learning_curve(data, df_target, model,
+                                      best_params,
                                       plot_learning_curve_cfg,
                                       seed)
         save_plot(lc_plot, save_folder / "lc_plot.png")
     
     model, coefs = train_model(model, data,
                                df_target,
-                               cast_lasts, best_params) # type: ignore
+                               best_params)
     coefs.to_csv(save_folder / "lm_coefs.csv")
-    print(f"Save linear model coefficients "
-            f"as {save_folder / 'lm_coefs.csv'}")
+    print(f"Save linear model coefficients as {save_folder / 'lm_coefs.csv'}")
     with open(model_path,'wb') as f:
         pickle.dump(model, f)
         print(f"Save model as {model_path}")

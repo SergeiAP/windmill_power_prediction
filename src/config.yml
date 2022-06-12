@@ -60,42 +60,45 @@ plot_feature_importance:
     fontsize:
 explore_train_model:
   features:
+    date_period: ['2009-07-02 13:00:00', '2011-01-01 00:00:00']
     include: all # all or [...]
-    exclude: [slag_recieving_group, distance]
+    exclude: [date, hour, side, month]
   set_plot_params:
     is_on: True
   linear_model:
-   cat_cols: [line_num]
+   cat_cols: [windfarm]
    model_params:
     feature_selector__threshold: "1.0*median"
-    feature_selector__estimator__min_samples_leaf: 10
+    feature_selector__estimator__min_samples_leaf: 30
     model__fit_intercept: True
     model__alpha: 30
   params_search:
     is_on: True
+    n_jobs: 2
     grid_params:
-      n_splits: 10
-      scoring: neg_mean_absolute_percentage_error
+      n_splits: 2
+      scoring: neg_mean_absolute_error
       model__alpha:
-        - func
-        - [log, -3, 3, 25] # np.logspace(-3, 3, num=25)
+        - vals
+        - [1.0] # np.logspace(-3, 3, num=25)
       feature_selector__threshold:
         - vals
-        - ["0.2*median", "0.4*median", "0.6*median", "0.8*median", "1.0*median", "1.1*median"]
+        - ["0.4*median", "1.0*median"] #"0.6*median", "0.8*median", "1.0*median", "1.1*median"]
     cv_params:
-      n_splits: 10
+      n_splits: 2
       return_train_score: True
       scoring:
         MAPE: neg_mean_absolute_percentage_error
         MSE: neg_mean_squared_error
         MAE: neg_mean_absolute_error
     plot_param_search:
-      scoring: "test_MAPE"
+      scoring: "test_MAE"
       x_axis: "model__alpha"
-      hover_cols: ["test_MAPE"] # +grid_params
+      hover_cols: ["test_MAE"] # +grid_params
       figsize: [20, 10]
   plot_learning_curve:
     is_on: True
-    scoring: neg_mean_absolute_percentage_error
+    n_jobs: 2
+    scoring: neg_mean_absolute_error
     figsize: [20, 10]
     n_splits: 10

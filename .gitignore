@@ -81,10 +81,9 @@ target/
 # exclude artifacts - plots
 /reports/figures/exploratory/*
 /reports/figures/importance/*
-/reports/figures/hyperparams/*
-!/reports/figures/exploratory/.gitkeep
-!/reports/figures/importance/.gitkeep
-!/reports/figures/hyperparams/.gitkeep
+
+# exclude artifacts - models
+/models/*
 
 # Mac OS-specific storage files
 .DS_Store
@@ -95,3 +94,6 @@ target/
 
 # Mypy cache
 .mypy_cache/
+
+# Save all .gitkeep
+!*.gitkeep

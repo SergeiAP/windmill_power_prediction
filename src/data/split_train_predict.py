@@ -10,6 +10,17 @@ def filter_df_by_date(df: pd.DataFrame,
                       date_col: str,
                       target_col: str,
                       params: dict) -> pd.DataFrame:
+    """_summary_
+
+    Args:
+        df (pd.DataFrame): _description_
+        date_col (str): _description_
+        target_col (str): _description_
+        params (dict): _description_
+
+    Returns:
+        pd.DataFrame: _description_
+    """
     date_filter = ((df[date_col] >= params['dates'][0])
                    & (df[date_col] <= params['dates'][1]))
     filter_ = ((df[target_col].isna() & date_filter) if params["is_na"]
@@ -24,6 +35,13 @@ def filter_df_by_date(df: pd.DataFrame,
 def split_train_predict(input_filepath: str,
                         output_trainpath: str,
                         output_predictpath: str) -> None:
+    """_summary_
+
+    Args:
+        input_filepath (str): _description_
+        output_trainpath (str): _description_
+        output_predictpath (str): _description_
+    """
     # read section
     df = pd.read_csv(input_filepath)
     target_col, date_col = get_data_config("common",
@@ -32,7 +50,8 @@ def split_train_predict(input_filepath: str,
                                                ["train_rows", "predict_rows"])
     
     df_train = filter_df_by_date(df, date_col, target_col, train_rows)
-    df_predict = filter_df_by_date(df, date_col, target_col, predict_rows)
+    df_predict = (filter_df_by_date(df, date_col, target_col, predict_rows)
+                  .drop(target_col, axis=1))
     
     df_train.to_csv(output_trainpath, index=False)
     df_predict.to_csv(output_predictpath, index=False)

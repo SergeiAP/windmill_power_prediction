@@ -77,3 +77,28 @@ stages:
       - reports/figures/importance/:
           persist: True
           cache: False
+  explore_train_model:
+    cmd: ${common.root} && python src/models/explore_train_model.py data/processed/data_train.csv models/metadata/ models/lm_model.pkl
+    params:
+      - ${common.config}:
+        - explore_train_model
+    deps:
+      - data/processed/data_train.csv
+      - src/models/explore_train_model.py
+    outs:
+      - models/metadata/:
+          persist: True
+          cache: False
+      - models/lm_model.pkl
+  predict_model:
+    cmd: ${common.root} && python src/models/predict_model.py data/processed/data_predict.csv models/lm_model.pkl models/prediction/predictions.csv
+    params:
+      - ${common.config}:
+        - explore_train_model.features
+    deps:
+      - data/processed/data_predict.csv
+      - src/models/predict_model.py
+    outs:
+      - models/prediction/predictions.csv:
+          persist: True
+          cache: False
