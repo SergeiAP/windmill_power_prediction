@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+
+  minio:
+    container_name: wpp_minio
+    hostname: minio
+    image: quay.io/minio/minio:RELEASE.2022-05-08T23-50-31Z
+    command: server --address ":5441" --console-address ":5442" /data/
+    expose:
+      - "5441"
+      - "5442"
+    networks:
+      - s3      
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}        
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5441/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    volumes:
+      - ./Docker/minio/:/data
+      
+  nginx:
+    image: nginx:1.19.2-alpine
+    container_name: wpp_nginx
+    hostname: nginx
+    volumes:
+      - ./Docker/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "5441:5441"
+      - "5442:5442"
+    networks:
+      - s3
+    depends_on:
+      - minio
+      
+  db:
+    container_name: wpp_postgres
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: /data/postgres
+    volumes:
+       - postgres:/data/postgres
+    ports:
+      - "5438:5432"
+    networks:
+      - postgres
+      
+  pgadmin:
+    container_name: wpp_pgadmin
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    volumes:
+       - ./Docker/pgadmin/:/var/lib/pgadmin
+    ports:
+      - "5439:80"
+    networks:
+      - postgres
+
+  mlflow:
+    restart: always
+    image: mlflow_server
+    container_name: wpp_mlflow_server
+    ports:
+      - "5440:5000"
+    networks:
+      - postgres
+      - s3
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - MLFLOW_S3_ENDPOINT_URL=http://nginx:5441
+    command: >
+      mlflow server 
+        --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
+        --default-artifact-root s3://${AWS_S3_BUCKET}/ 
+        --host 0.0.0.0
+
+networks:
+  postgres:
+    driver: bridge
+  s3:
+    driver: bridge
+
+volumes:
+  postgres:

@@ -3,6 +3,15 @@ windmill_power_prediction
 
 Data Science case for windmill power prediction based on weather. Based on Data Challenge of Air Liquide and TotalEnergies companies in 2021. The link of the competition is https://datascience.total.com/fr/challenge/19/details#.
 
+
+To connect to database use:
+```bash
+docker ps
+# find the image postgres / container wpp_postgres, copy `CONTAINER ID`
+docker inspect `CONTAINER ID`
+# copy "IPAddress" in the end of the file, use it for database connection in `pgadmin`
+```
+
 Project Organization
 ------------
 
