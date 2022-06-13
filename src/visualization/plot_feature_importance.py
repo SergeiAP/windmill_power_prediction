@@ -12,7 +12,7 @@ import ppscore as pps
 import seaborn as sns
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.inspection import permutation_importance
-from sklearn.metrics import mean_absolute_percentage_error
+from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils._bunch import Bunch as sklearn_bunch
 
@@ -50,8 +50,8 @@ def get_permutation_importance(df: pd.DataFrame,
     rf = ExtraTreesRegressor(random_state=random_state,
                              **random_forest_cfg)
     rf.fit(X_train, y_train)
-    print(f"Permeation: random forest MAPE is "
-          f"{100 * mean_absolute_percentage_error(rf.predict(X_test), y_test):.1f}%")
+    print(f"Permeation: random forest MAE is "
+          f"{mean_absolute_error(rf.predict(X_test), y_test):.3f}")
     
     result = permutation_importance(
         rf, X_test, y_test, n_repeats=n_repeats, random_state=random_state, n_jobs=-1)

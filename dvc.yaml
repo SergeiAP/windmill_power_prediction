@@ -73,12 +73,11 @@ stages:
     deps:
       - data/processed/data_train.csv
       - src/visualization/plot_feature_importance.py 
-    outs:
-      - reports/figures/importance/:
-          persist: True
-          cache: False
+    plots:
+      - reports/figures/importance/pfi_perm_feature_importances.png:
+          cache: false
   explore_train_model:
-    cmd: ${common.root} && python src/models/explore_train_model.py data/processed/data_train.csv models/metadata/ models/lm_model.pkl
+    cmd: ${common.root} && python src/models/explore_train_model.py data/processed/data_train.csv models/metadata/ models/
     params:
       - ${common.config}:
         - explore_train_model
@@ -90,6 +89,15 @@ stages:
           persist: True
           cache: False
       - models/lm_model.pkl
+    metrics:
+      - models/metrics.json:
+          cache: false
+    plots:
+      - models/lc_plot.csv:
+          cache: false
+          x: train_size
+          y: test_mean
+          title: "Learning test curve MAE"
   predict_model:
     cmd: ${common.root} && python src/models/predict_model.py data/processed/data_predict.csv models/lm_model.pkl models/prediction/predictions.csv
     params:
@@ -100,5 +108,4 @@ stages:
       - src/models/predict_model.py
     outs:
       - models/prediction/predictions.csv:
-          persist: True
           cache: False

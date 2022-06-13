@@ -85,6 +85,9 @@ target/
 # exclude artifacts - models
 /models/*
 
+# exclude artifacts - dvc
+/dvc_plots
+
 # Mac OS-specific storage files
 .DS_Store
 

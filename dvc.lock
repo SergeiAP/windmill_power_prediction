@@ -157,8 +157,8 @@ stages:
       md5: bfc394140414cbe1a47566d087136644
       size: 77899595
     - path: src/visualization/plot_feature_importance.py
-      md5: 3f0b93d5cf4e441eb3368a8ab223a0ec
-      size: 7618
+      md5: 78c98a6faa16a3cdb8c8364d1355ca17
+      size: 7588
     params:
       src/config.yml:
         plot_feature_importance:
@@ -185,10 +185,9 @@ stages:
             - 15
             fontsize:
     outs:
-    - path: reports/figures/importance/
-      md5: c57cc889926713f94aa04cb6c2a38bc2.dir
-      size: 581830
-      nfiles: 3
+    - path: reports/figures/importance/pfi_perm_feature_importances.png
+      md5: 293fc22e9c0196d2820077bc147e01e6
+      size: 121527
   split_train_predict:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/data/split_train_predict.py
       data/interim/data_featured.csv data/processed/data_train.csv data/processed/data_predict.csv
@@ -223,20 +222,20 @@ stages:
       size: 77899595
   explore_train_model:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/models/explore_train_model.py
-      data/processed/data_train.csv models/metadata/ models/lm_model.pkl
+      data/processed/data_train.csv models/metadata/ models/
     deps:
     - path: data/processed/data_train.csv
       md5: bfc394140414cbe1a47566d087136644
       size: 77899595
     - path: src/models/explore_train_model.py
-      md5: 923d3a729a203b1086bbacb08d036e71
-      size: 17429
+      md5: 28eb02601fa950f80fee268d92fac43b
+      size: 20725
     params:
       src/config.yml:
         explore_train_model:
           features:
             date_period:
-            - '2009-07-02 13:00:00'
+            - '2010-01-01 00:00:00'
             - '2011-01-01 00:00:00'
             include: all
             exclude:
@@ -271,11 +270,17 @@ stages:
               n_splits: 2
               return_train_score: true
               scoring:
-                MAPE: neg_mean_absolute_percentage_error
                 MSE: neg_mean_squared_error
                 MAE: neg_mean_absolute_error
             plot_param_search:
               scoring: test_MAE
+              metrics_to_track:
+                test:
+                - MSE
+                - MAE
+                - MAE_median
+                - MAE_std
+                - MAE_eval
               x_axis: model__alpha
               hover_cols:
               - test_MAE
@@ -289,15 +294,21 @@ stages:
             figsize:
             - 20
             - 10
-            n_splits: 10
+            n_splits: 5
     outs:
+    - path: models/lc_plot.csv
+      md5: ffe5af45d4a98318e2200d463483d160
+      size: 513
     - path: models/lm_model.pkl
-      md5: 453861ec68b5cc3bfb7958aaccc69a56
-      size: 24521546
+      md5: c566f7624d39de16378b81339837c213
+      size: 16579010
     - path: models/metadata/
-      md5: 5de9abe9ac3d275c2dbfbf2894e671b8.dir
-      size: 3756230
+      md5: 3dec21ecabe24726add8b2296f39cf94.dir
+      size: 3745364
       nfiles: 5
+    - path: models/metrics.json
+      md5: 29db597feadd9ed95c81e87a13d0212e
+      size: 211
   predict_model:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/models/predict_model.py data/processed/data_predict.csv
       models/lm_model.pkl models/prediction/predictions.csv
@@ -306,18 +317,21 @@ stages:
       md5: 1938580aa29bd674ba7c95767ec23760
       size: 31047111
     - path: src/models/predict_model.py
-      md5: 752ab4ab858b371f31ff58ea58497d81
-      size: 1820
+      md5: 5472cb53b5907dff7df2ce572dda8300
+      size: 1788
     params:
       src/config.yml:
         explore_train_model.features:
           date_period:
-          - '2009-07-02 13:00:00'
+          - '2010-01-01 00:00:00'
           - '2011-01-01 00:00:00'
           include: all
           exclude:
           - date
+          - hour
+          - side
+          - month
     outs:
     - path: models/prediction/predictions.csv
-      md5: 91307d2dd33731010cbacd105994e2c7
-      size: 1815016
+      md5: 5c8e89857b1f55cbdac353ff70064806
+      size: 1815308

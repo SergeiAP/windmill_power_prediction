@@ -60,7 +60,7 @@ plot_feature_importance:
     fontsize:
 explore_train_model:
   features:
-    date_period: ['2009-07-02 13:00:00', '2011-01-01 00:00:00']
+    date_period: ['2010-01-01 00:00:00', '2011-01-01 00:00:00']
     include: all # all or [...]
     exclude: [date, hour, side, month]
   set_plot_params:
@@ -88,11 +88,12 @@ explore_train_model:
       n_splits: 2
       return_train_score: True
       scoring:
-        MAPE: neg_mean_absolute_percentage_error
         MSE: neg_mean_squared_error
         MAE: neg_mean_absolute_error
     plot_param_search:
       scoring: "test_MAE"
+      metrics_to_track:
+        test: [MSE, MAE, MAE_median, MAE_std, MAE_eval]
       x_axis: "model__alpha"
       hover_cols: ["test_MAE"] # +grid_params
       figsize: [20, 10]
@@ -101,4 +102,4 @@ explore_train_model:
     n_jobs: 2
     scoring: neg_mean_absolute_error
     figsize: [20, 10]
-    n_splits: 10
+    n_splits: 5

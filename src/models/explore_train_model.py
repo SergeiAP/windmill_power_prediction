@@ -1,11 +1,13 @@
 # pylint: disable=missing-module-docstring
 # TODO: change print to logs
 # TODO: split file
+import os
 import copy
 import pickle  # nosec B403
 import time
 from pathlib import Path
 from typing import Iterable
+import json
 
 import click
 import matplotlib.pyplot as plt
@@ -68,8 +70,9 @@ def linear_model(df_cols: list[str],
 def train_model(model: Pipeline,
                 data: pd.DataFrame,
                 target: pd.Series,
-                best_params: dict[str, str | float]
-                ) -> tuple[Pipeline, pd.DataFrame]:
+                best_params: dict[str, str | float],
+                metrics_dict: dict[str, dict[str, float]],
+                ) -> tuple[Pipeline, dict[str, dict[str, float]], pd.DataFrame]:
     """Train model without testing on full dataset
 
     Args:
@@ -85,9 +88,10 @@ def train_model(model: Pipeline,
     
     model.set_params(**best_params)
     model.fit(data, target)
+    mae_ = round(mean_absolute_error(target, model.predict(data)), 2)
     
-    print(f"Train MAE is: "
-          f"{mean_absolute_error(target, model.predict(data)) * 100:.2f}%")
+    metrics_dict["train"] = {"MAE": mae_}
+    print(f"Train MAE is: {mae_ :.2f}")
     # For linear models only
     
     if hasattr(model[-1], 'intercept_'):
@@ -99,8 +103,8 @@ def train_model(model: Pipeline,
                                        [intercept]), 
                             columns=['coefficients'], index=feature_names)
         coefs.index.name = "feature_name" 
-        return model, coefs
-    return model, pd.DataFrame(None)
+        return model, metrics_dict, coefs
+    return model, metrics_dict, pd.DataFrame(None)
 
 
 def param_search(data: pd.DataFrame,
@@ -178,13 +182,17 @@ def retrieve_grid_params(param_grid: dict) -> dict:
 def explore_param_search(cv_results: dict,
                          key_scoring: str,
                          all_scores: Iterable[str],
-                         ) -> tuple[pd.DataFrame, dict[str, str | float]]:
+                         metrics_to_track: dict[str, list[str]],
+                         ) -> tuple[pd.DataFrame,
+                                    dict[str, dict[str, float]],
+                                    dict[str, str | float]]:
     """Explore params of inner and outer cross-validations
 
     Args:
         cv_results (dict): raw nested cross-validation results
         key_scoring (str): scoring for `best_params` selection
         all_scores (Iterable[str]): names of all scores to be stored
+        metrics_to_track (dict[str, list[str]]): metrics to be tracked in dvc/mlflow
 
     Returns:
         tuple[pd.DataFrame, dict[str, str | float]]: all params params and key metrics
@@ -201,10 +209,12 @@ def explore_param_search(cv_results: dict,
     cv_exp = prepare_param_serach(cv_exp, cv_results, all_scores, key_scoring)
 
     # calc statistics for best models 
-    cv_exp[f"{key_scoring}_median"] = [round(np.median(vals), 5) 
-                                       for vals in cv_exp[f"{key_scoring}_splits"]]
-    cv_exp[f"{key_scoring}_std"] = [round(np.std(vals), 5) 
-                                    for vals in cv_exp[f"{key_scoring}_splits"]]
+    cv_exp[f"{key_scoring}_median"] = [
+        round(0.5 * np.median(vals) + 0.5 * metric_, 5)
+        for metric_, vals in zip(cv_exp[key_scoring], cv_exp[f"{key_scoring}_splits"])]
+    cv_exp[f"{key_scoring}_std"] = [
+        round(np.std(vals + [metric_]), 5)
+        for metric_, vals in zip(cv_exp[key_scoring], cv_exp[f"{key_scoring}_splits"])]
     
     # choose best model
     df_cv_exp = pd.DataFrame(cv_exp)
@@ -213,11 +223,14 @@ def explore_param_search(cv_results: dict,
     df_cv_exp[f"{key_scoring}_eval"] = estimate_val
     idx_min = df_cv_exp[f"{key_scoring}_eval"].argmin()
     best_params = df_cv_exp.loc[idx_min, grid_params].to_dict()
+    metrics_dict = df_metrcis_to_dict(df_cv_exp.loc[idx_min], # type: ignore
+                                      metrics_to_track["test"],
+                                      "test")
 
     print(f"Best characteristics evaluated by column {key_scoring}_eval is")
-    print(df_cv_exp.loc[df_cv_exp[f"{key_scoring}_eval"].argmin()])
+    print(df_cv_exp.loc[idx_min])
     
-    return df_cv_exp, best_params
+    return df_cv_exp, metrics_dict, best_params
 
 def prepare_param_serach(cv_params: dict,
                          cv_results: dict,
@@ -251,6 +264,29 @@ def prepare_param_serach(cv_params: dict,
         cv_params[f"{key_scoring}_splits"].append(inner_scores)
     return cv_params
 
+def df_metrcis_to_dict(df_best: pd.Series,
+                       metrics: list[str],
+                       key: str,
+                       sep_: str = "_"
+                       ) -> dict[str, dict[str, float]]:
+    """Convert dataframe to dict to save it as .json as metrics for dvc/mlflow
+
+    Args:
+        df_best (pd.Series): series to choose metrics
+        metrics (list[str]): whihc metrics to choose
+        key (str): common name for metrics
+        sep_ (str, optional): separation for key and metrics. Defaults to "_".
+
+    Returns:
+        dict[str, dict[str, float]]: metrics in required  json-alike format
+    """    
+    metrics_dict: dict[str, dict[str, float]] = {}
+    metric_names: list[str] = [key + sep_ + metric_ for metric_ in metrics]
+    df_best = df_best.loc[metric_names]
+    df_best.rename(lambda x: x[len(key + sep_):], inplace=True)
+    metrics_dict[key] = df_best.to_dict()
+    return metrics_dict
+    
 
 def plot_param_search(df_cv_exp: pd.DataFrame,
                       params_search_cfg: dict,
@@ -287,7 +323,7 @@ def plot_learning_curve(data: pd.DataFrame,
                         best_params: dict[str, str | float],
                         plot_learning_curve_cfg: dict,
                         random_state: int,
-                        ) -> mpl_figure:
+                        ) -> tuple[mpl_figure, pd.DataFrame]:
     """
     Plot sklearn.model_selection.learning_curve based on fiited inside of the method
     models
@@ -309,7 +345,7 @@ def plot_learning_curve(data: pd.DataFrame,
     n_jobs = plot_learning_curve_cfg["n_jobs"]
     
     outer_cv = ShuffleSplit(n_splits=n_splits, random_state=random_state)
-    train_sizes = np.linspace(0.1, 1.0, num=10, endpoint=True)
+    train_sizes = np.linspace(0.1, 1.0, num=n_splits, endpoint=True)
     format_dict = {"capsize": 10, "fmt": "-o", "alpha": 0.5, "elinewidth": 2}
 
     model.set_params(**best_params)
@@ -319,20 +355,26 @@ def plot_learning_curve(data: pd.DataFrame,
                             scoring=scoring,
                             n_jobs=n_jobs)
     train_size, train_scores, test_scores = results[:3]
+    
     # Convert the scores into errors
     train_errors, test_errors = -1 * train_scores, -1 * test_scores
+    train_err_mean, train_err_std = train_errors.mean(axis=1), train_errors.std(axis=1)
+    test_err_mean, test_err_std = test_errors.mean(axis=1), test_errors.std(axis=1)
+    colnames = ["train_size", "train_mean", "train_std", "test_mean", "test_std"]
+    metrics = [train_size, train_err_mean, train_err_std, test_err_mean, test_err_std]
+    df_lc = pd.DataFrame({col: vals for col, vals in zip(colnames, metrics)})
     
     fig, ax = plt.subplots(figsize=figsize)
-    ax.errorbar(train_size, train_errors.mean(axis=1),
-                 yerr=train_errors.std(axis=1), label="Training error", **format_dict)
-    ax.errorbar(train_size, test_errors.mean(axis=1),
-                 yerr=test_errors.std(axis=1), label="Testing error", **format_dict)
+    ax.errorbar(train_size, train_err_mean,
+                 yerr=train_err_std, label="Training error", **format_dict)
+    ax.errorbar(train_size, test_err_mean,
+                 yerr=test_err_std, label="Testing error", **format_dict)
     ax.set_xlabel("Number of samples in the training set")
     ax.set_ylabel(f"{scoring[4:]}")  # del "neg_"
     ax.set_title("Learning curve for linear model")
     plt.legend()
     
-    return fig
+    return fig, df_lc
 
 
 @click.command()
@@ -354,9 +396,11 @@ def run_tuning_eval_train(input_filepath: str,
     features: dict
     target_name: str
     best_params: dict[str, str | float]
+    metrics_dict: dict[str, dict[str, float]] = {}
         
     # read section
     save_folder = Path(Path(".") / output_folder)
+    model_folder = Path(Path(".") / model_path)
     df = pd.read_csv(input_filepath)
     (features,
      set_plot_params_cfg,
@@ -396,10 +440,11 @@ def run_tuning_eval_train(input_filepath: str,
                                   params_search_cfg["grid_params"],
                                   params_search_cfg["cv_params"],
                                   seed)
-        df_cv_exp, best_params = explore_param_search(
+        df_cv_exp, metrics_dict, best_params = explore_param_search(
             cv_results,
             params_search_cfg["plot_param_search"]["scoring"],
             scoring_names,
+            params_search_cfg["plot_param_search"]["metrics_to_track"],
             )
         df_cv_exp.to_csv(save_folder / "cv_result.csv", index=False)
         print(f"Save cross-validation exploration results "
@@ -408,21 +453,32 @@ def run_tuning_eval_train(input_filepath: str,
         cv_plot = plot_param_search(df_cv_exp, params_search_cfg, [*best_params])
         save_plot(cv_plot, save_folder / "cv_plot.html") 
     
-    if plot_learning_curve_cfg["is_on"]:
-        lc_plot = plot_learning_curve(data, df_target, model,
-                                      best_params,
-                                      plot_learning_curve_cfg,
-                                      seed)
-        save_plot(lc_plot, save_folder / "lc_plot.png")
     
-    model, coefs = train_model(model, data,
-                               df_target,
-                               best_params)
-    coefs.to_csv(save_folder / "lm_coefs.csv")
+    if plot_learning_curve_cfg["is_on"]:
+        lc_plot, df_lc = plot_learning_curve(data, df_target, model,
+                                             best_params,
+                                             plot_learning_curve_cfg,
+                                             seed)
+        save_plot(lc_plot, save_folder / "lc_plot.png")
+        df_lc.to_csv(model_folder / "lc_plot.csv")
+        print(f"Save learning curve params as {model_folder / 'lc_plot.csv'}")
+    
+    model, metrics_dict, coefs = train_model(model,
+                                             data,
+                                             df_target,
+                                             best_params,
+                                             metrics_dict)
+    
+    
+    # save section
+    coefs.to_csv(save_folder / "lm_coefs.csv", index=False)
     print(f"Save linear model coefficients as {save_folder / 'lm_coefs.csv'}")
-    with open(model_path,'wb') as f:
+    with open(model_folder / "metrics.json", 'w', encoding='utf-8') as metrics_json:
+        json.dump(metrics_dict, metrics_json, indent=4)
+    print(f"Save metrics as {save_folder / 'metrics.json'}")
+    with open(model_folder / "lm_model.pkl",'wb') as f:
         pickle.dump(model, f)
-        print(f"Save model as {model_path}")
+    print(f"Save model as {model_path}")
     
 
     print(f"Execution time is {round((time.time() - start_time) / 60, 2)} minutes")
