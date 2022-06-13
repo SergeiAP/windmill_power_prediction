@@ -81,7 +81,7 @@ stages:
       - src/visualization/plot_feature_importance.py 
     plots:
       - reports/figures/importance/pfi_perm_feature_importances.png:
-          cache: false
+          cache: True
   explore_train_model:
     cmd: ${common.root} && python src/models/explore_train_model.py data/processed/data_train.csv models/metadata/ models/
     params:
@@ -97,10 +97,10 @@ stages:
       - models/lm_model.pkl
     metrics:
       - models/metrics.json:
-          cache: false
+          cache: False
     plots:
       - models/lc_plot.csv:
-          cache: false
+          cache: True
           x: train_size
           y: test_mean
           title: "Learning test curve MAE"

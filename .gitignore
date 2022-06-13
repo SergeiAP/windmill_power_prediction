@@ -85,6 +85,9 @@ target/
 # exclude artifacts - models
 /models/*
 
+# https://dvc.org/doc/command-reference/metrics
+!/models/metrics.json
+
 # exclude artifacts - dvc
 /dvc_plots
 

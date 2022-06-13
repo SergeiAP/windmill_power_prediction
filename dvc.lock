@@ -228,15 +228,15 @@ stages:
       md5: bfc394140414cbe1a47566d087136644
       size: 77899595
     - path: src/models/explore_train_model.py
-      md5: c1968d05e37985998d1a6ff291847501
+      md5: 44f306527064db8f25d631644132e560
       size: 21617
     params:
       src/config.yml:
         explore_train_model:
           features:
             date_period:
-            - '2009-07-02 13:00:00'
-            - '2012-06-25 00:00:00'
+            - '2010-01-01 00:00:00'
+            - '2011-01-01 00:00:00'
             include: all
             exclude:
             - date
@@ -311,8 +311,8 @@ stages:
       size: 3757117
       nfiles: 5
     - path: models/metrics.json
-      md5: 2f4fef8d5409f8c826fb7595bb45c680
-      size: 209
+      md5: 5ad9540b1c9ddb6b5796008445739b1e
+      size: 203
   predict_model:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/models/predict_model.py data/processed/data_predict.csv
       models/lm_model.pkl models/prediction/predictions.csv
@@ -327,8 +327,8 @@ stages:
       src/config.yml:
         explore_train_model.features:
           date_period:
-          - '2009-07-02 13:00:00'
-          - '2012-06-25 00:00:00'
+          - '2010-01-01 00:00:00'
+          - '2011-01-01 00:00:00'
           include: all
           exclude:
           - date

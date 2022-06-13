@@ -74,18 +74,18 @@ explore_train_model:
     model__alpha: 30
   params_search:
     is_on: True
-    n_jobs: 2
+    n_jobs: -1
     grid_params:
-      n_splits: 2
+      n_splits: 5
       scoring: neg_mean_absolute_error
       model__alpha:
-        - vals
-        - [1.0] # np.logspace(-3, 3, num=25)
+        - func
+        - [log, -2, 2, 20] # np.logspace(-3, 3, num=25)
       feature_selector__threshold:
         - vals
-        - ["0.4*median", "1.0*median"] #"0.6*median", "0.8*median", "1.0*median", "1.1*median"]
+        - ["0.4*median", "0.8*median", "1.2*median"] #"0.6*median", "0.8*median", "1.0*median", "1.1*median"]
     cv_params:
-      n_splits: 2
+      n_splits: 5
       return_train_score: True
       scoring:
         MSE: neg_mean_squared_error
@@ -99,7 +99,7 @@ explore_train_model:
       figsize: [20, 10]
   plot_learning_curve:
     is_on: True
-    n_jobs: 2
+    n_jobs: -1
     scoring: neg_mean_absolute_error
     figsize: [20, 10]
-    n_splits: 5
+    n_splits: 10
