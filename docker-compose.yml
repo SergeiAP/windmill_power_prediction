@@ -1,3 +1,4 @@
+# docker-compose up -d --build
 version: '3.8'
 
 services:
@@ -54,6 +55,7 @@ services:
       - postgres
       
   pgadmin:
+    # to connect to postgres use ip from: `docker ps`, `docker inspect {POSTGRES_CONTAINER ID}` -> IPAddress
     container_name: wpp_pgadmin
     image: dpage/pgadmin4
     restart: always
@@ -69,7 +71,7 @@ services:
 
   mlflow:
     restart: always
-    image: mlflow_server
+    image: wpp_mlflow_server
     container_name: wpp_mlflow_server
     ports:
       - "5440:5000"
@@ -79,12 +81,29 @@ services:
     environment:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      # localhost is not working because it is going to use internal network 
       - MLFLOW_S3_ENDPOINT_URL=http://nginx:5441
     command: >
       mlflow server 
         --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
         --default-artifact-root s3://${AWS_S3_BUCKET}/ 
         --host 0.0.0.0
+
+  app:
+    # before create image by `docker build -f Docker/model_service/Dockerfile -t wpp_model_service .`
+    container_name: wpp_model_service
+    image: wpp_model_service
+    ports:
+      # check port in cmd by `netstat -a -n -o | find "5443"`
+      - "5443:80"
+    networks:
+      - s3
+    environment:
+      # localhost is not working because it is going to use internal network 
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_S3_ENDPOINT_URL=http://nginx:5441
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 
 networks:
   postgres:

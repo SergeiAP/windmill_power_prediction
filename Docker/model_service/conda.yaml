@@ -1,0 +1,18 @@
+channels:
+- conda-forge
+- bioconda
+- defaults
+dependencies:
+- python=3.10.4
+- pip<=22.1.1
+- mlflow==1.26.1
+- scikit-learn==1.1.1
+- numpy==1.22.4
+- pandas==1.4.2
+- python-dotenv==0.20.0
+- fastapi==0.78.0
+- uvicorn==0.17.6
+- boto3==1.21.21
+- pip:
+  - python-multipart
+name: windmill_power_prediction

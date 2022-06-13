@@ -3,6 +3,13 @@ windmill_power_prediction
 
 Data Science case for windmill power prediction based on weather. Based on Data Challenge of Air Liquide and TotalEnergies companies in 2021. The link of the competition is https://datascience.total.com/fr/challenge/19/details#.
 
+Docker commands:
+```bash
+docker-compose up -d --build
+docker build -f Docker/model_service/Dockerfile -t wpp_model_service .
+docker-compose up -d --build app
+docker cp ./inference.py wpp_model_service:/code/app/inference.py
+```
 
 To connect to database use:
 ```bash
@@ -18,6 +25,16 @@ dvc remote add -d remote s3://wind-power-prediciton/dvc
 dvc remote modify remote endpointurl http://127.0.0.1:5441
 ```
 then add `access_key_id` and `secret_access_key` in `./dvc/config`.
+
+Check wheather port is busy in Windows/cmd (e.g. 5443)
+```bash
+netstat -a -n -o | find "5443"`
+```
+
+Save conda environment
+```bash
+conda env export > conda.yml
+```
 
 Project Organization
 ------------

@@ -1,0 +1,5 @@
+# invocations: file with targets -sample_invocations_tegret.csv 
+curl --location --request POST 'http://127.0.0.1:5443/invocations' --form 'file=@"./sample_invocations.csv"'
+
+# test:
+curl --location --request POST 'http://127.0.0.1:5443/test' --form 'file=@"./sample_test.csv
