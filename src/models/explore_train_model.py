@@ -29,6 +29,11 @@ from src.read_config import get_data_config
 from src.visualization.plot_utils import (  # pylint: disable=import-error
     save_plot, set_plot_params)
 
+import mlflow
+from mlflow.models.signature import infer_signature
+from mlflow.tracking import MlflowClient
+from dotenv import load_dotenv
+
 
 def linear_model(df_cols: list[str],
                  cat_cols: list[str],
@@ -401,6 +406,7 @@ def run_tuning_eval_train(input_filepath: str,
     # read section
     save_folder = Path(Path(".") / output_folder)
     model_folder = Path(Path(".") / model_path)
+    exploratory_folder = "./reports/figures/"
     df = pd.read_csv(input_filepath)
     (features,
      set_plot_params_cfg,
@@ -453,14 +459,13 @@ def run_tuning_eval_train(input_filepath: str,
         cv_plot = plot_param_search(df_cv_exp, params_search_cfg, [*best_params])
         save_plot(cv_plot, save_folder / "cv_plot.html") 
     
-    
     if plot_learning_curve_cfg["is_on"]:
         lc_plot, df_lc = plot_learning_curve(data, df_target, model,
                                              best_params,
                                              plot_learning_curve_cfg,
                                              seed)
         save_plot(lc_plot, save_folder / "lc_plot.png")
-        df_lc.to_csv(model_folder / "lc_plot.csv")
+        df_lc.to_csv(model_folder / "lc_plot.csv", index=False)
         print(f"Save learning curve params as {model_folder / 'lc_plot.csv'}")
     
     model, metrics_dict, coefs = train_model(model,
@@ -469,17 +474,40 @@ def run_tuning_eval_train(input_filepath: str,
                                              best_params,
                                              metrics_dict)
     
-    
     # save section
-    coefs.to_csv(save_folder / "lm_coefs.csv", index=False)
+    coefs.to_csv(save_folder / "lm_coefs.csv")
     print(f"Save linear model coefficients as {save_folder / 'lm_coefs.csv'}")
     with open(model_folder / "metrics.json", 'w', encoding='utf-8') as metrics_json:
         json.dump(metrics_dict, metrics_json, indent=4)
     print(f"Save metrics as {save_folder / 'metrics.json'}")
     with open(model_folder / "lm_model.pkl",'wb') as f:
         pickle.dump(model, f)
-    print(f"Save model as {model_path}")
+    print(f"Save model as {model_path}/lm_model.pkl")
     
+    
+    load_dotenv()
+    remote_server_uri = os.getenv("MLFLOW_TRACKING_URI")
+    experiment_name = "selector-ridge_model"
+    mlflow.set_tracking_uri(remote_server_uri) # type: ignore
+    experiment_id = mlflow.set_experiment(experiment_name)
+    # signature store metadata for input-output of the model in mlflow
+    signature = infer_signature(data, df_target)
+    # mlflow log best params
+    mlflow.log_params(best_params)
+    # mlflow log metric score
+    mlflow_metric = {stage_ + "_" + metric_: vals 
+                    for stage_ in metrics_dict 
+                    for metric_, vals in metrics_dict[stage_].items()}
+    mlflow.set_tag("model", "Ridge")
+    mlflow.set_tag("selector", "ExtraTreesRegressor")
+    mlflow.set_tag("windfarm", "categorical")
+    mlflow.log_metrics(mlflow_metric)
+    mlflow.log_artifact(output_folder)
+    mlflow.log_artifact(exploratory_folder)
+    mlflow.sklearn.log_model(sk_model=model,
+                                artifact_path="selector-ridge_model",
+                                registered_model_name="wpp_selector-ridge",
+                                signature=signature)
 
     print(f"Execution time is {round((time.time() - start_time) / 60, 2)} minutes")
 

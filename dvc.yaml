@@ -9,8 +9,10 @@ stages:
       - data/raw/
       - src/data/merge_data.py
     outs:
-      - data/interim/data_test_labels.csv
-      - data/interim/data_train.csv
+      - data/interim/data_test_labels.csv:
+          cache: false
+      - data/interim/data_train.csv:
+          cache: false
   aggregate_weather:
     cmd: ${common.root} && python src/data/aggregate_weather.py data/interim/data_train.csv data/interim/data_agg_weather.csv
     deps:
@@ -19,7 +21,8 @@ stages:
       - src/data/aggregate_weather_config.py
       - src/data/process_weather.py
     outs:
-      - data/interim/data_agg_weather.csv
+      - data/interim/data_agg_weather.csv:
+          cache: false
   clip_data:
     cmd: ${common.root} && python src/data/clip_outliers.py data/interim/data_agg_weather.csv data/interim/data_clipped.csv
     params:
@@ -29,7 +32,8 @@ stages:
       - data/interim/data_agg_weather.csv
       - src/data/clip_outliers.py
     outs:
-      - data/interim/data_clipped.csv
+      - data/interim/data_clipped.csv:
+          cache: false
   create_features:
     cmd: ${common.root} && python src/features/create_features.py data/interim/data_clipped.csv data/interim/data_featured.csv
     deps:
@@ -39,7 +43,8 @@ stages:
       - src/features/math_functions.py
       - src/features/process_features.py
     outs:
-      - data/interim/data_featured.csv
+      - data/interim/data_featured.csv:
+          cache: false
   split_train_predict:
     cmd: ${common.root} && python src/data/split_train_predict.py data/interim/data_featured.csv data/processed/data_train.csv data/processed/data_predict.csv
     params:
@@ -52,7 +57,8 @@ stages:
       - src/data/split_train_predict.py
     outs:
       - data/processed/data_train.csv
-      - data/processed/data_predict.csv
+      - data/processed/data_predict.csv:
+          cache: false
   plot_exploratory:
     cmd: ${common.root} && python src/visualization/plot_exploratory.py data/processed/data_train.csv reports/figures/exploratory/
     params:

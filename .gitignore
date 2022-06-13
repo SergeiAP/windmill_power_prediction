@@ -88,6 +88,9 @@ target/
 # exclude artifacts - dvc
 /dvc_plots
 
+# exclude  - mlruns
+/mlruns
+
 # Mac OS-specific storage files
 .DS_Store
 

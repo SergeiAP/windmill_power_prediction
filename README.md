@@ -12,6 +12,13 @@ docker inspect `CONTAINER ID`
 # copy "IPAddress" in the end of the file, use it for database connection in `pgadmin`
 ```
 
+To add S3-like (not AWS S3) as dvc remote use the following commands:
+```bash
+dvc remote add -d remote s3://wind-power-prediciton/dvc
+dvc remote modify remote endpointurl http://127.0.0.1:5441
+```
+then add `access_key_id` and `secret_access_key` in `./dvc/config`.
+
 Project Organization
 ------------
 

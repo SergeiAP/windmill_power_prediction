@@ -228,8 +228,8 @@ stages:
       md5: bfc394140414cbe1a47566d087136644
       size: 77899595
     - path: src/models/explore_train_model.py
-      md5: 28eb02601fa950f80fee268d92fac43b
-      size: 20725
+      md5: 44f306527064db8f25d631644132e560
+      size: 21617
     params:
       src/config.yml:
         explore_train_model:
@@ -297,14 +297,14 @@ stages:
             n_splits: 5
     outs:
     - path: models/lc_plot.csv
-      md5: ffe5af45d4a98318e2200d463483d160
-      size: 513
+      md5: bf0bcff7c224ca58323cb8c79f4fe8b5
+      size: 502
     - path: models/lm_model.pkl
       md5: c566f7624d39de16378b81339837c213
       size: 16579010
     - path: models/metadata/
-      md5: 3dec21ecabe24726add8b2296f39cf94.dir
-      size: 3745364
+      md5: 76c509357b700a0e64f1de5fcae8a0ab.dir
+      size: 3746052
       nfiles: 5
     - path: models/metrics.json
       md5: 29db597feadd9ed95c81e87a13d0212e
