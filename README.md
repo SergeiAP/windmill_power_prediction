@@ -146,6 +146,11 @@ conda env export > conda.yml
 conda env create -n windmill_power_prediction -f conda.yml
 ```
 
+Other DVC commands
+```bash
+dvc push ./data/raw/test.csv ./data/raw/train.csv ./data/raw/wp1.csv ./data/raw/wp2.csv ./data/raw/wp3.csv ./data/raw/wp4.csv ./data/raw/wp5.csv ./data/raw/wp6.csv
+```
+
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
 
 # Contacts
