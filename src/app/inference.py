@@ -45,7 +45,7 @@ model = Model("wpp_selector-ridge", "Staging")
 
 # Create the POST endpoint with path '/invocations'
 @app.post("/invocations")
-async def create_upload_file(file: UploadFile = File(...)) -> list[str]:
+async def predict(file: UploadFile = File(...)) -> list[str]:
     """Generate predicitions using file
 
     Args:
