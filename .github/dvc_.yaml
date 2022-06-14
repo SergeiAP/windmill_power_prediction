@@ -1,0 +1,133 @@
+vars:
+  - common:
+      root: set PYTHONPATH=%PYTHONPATH%;./
+      config: src/config.yml
+      root_folder: ../
+stages:
+  merge_data:
+    cmd: python src/data/merge_data.py data/raw/ data/interim/data_test_labels.csv data/interim/data_train.csv
+    deps:
+      - data/raw/
+      - src/data/merge_data.py
+    outs:
+      - data/interim/data_test_labels.csv:
+          cache: false
+      - data/interim/data_train.csv:
+          cache: false
+  aggregate_weather:
+    cmd: ${common.root} && python src/data/aggregate_weather.py data/interim/data_train.csv data/interim/data_agg_weather.csv
+    deps:
+      - data/interim/data_train.csv
+      - src/data/aggregate_weather.py
+      - src/data/aggregate_weather_config.py
+      - src/data/process_weather.py
+    outs:
+      - data/interim/data_agg_weather.csv:
+          cache: false
+  clip_data:
+    cmd: ${common.root} && python src/data/clip_outliers.py data/interim/data_agg_weather.csv data/interim/data_clipped.csv
+    params:
+      - ${common.config}:
+        - clip_outliers
+    deps:
+      - data/interim/data_agg_weather.csv
+      - src/data/clip_outliers.py
+    outs:
+      - data/interim/data_clipped.csv:
+          cache: false
+  create_features:
+    cmd: ${common.root} && python src/features/create_features.py data/interim/data_clipped.csv data/interim/data_featured.csv
+    deps:
+      - data/interim/data_clipped.csv
+      - src/features/create_features.py
+      - src/features/create_features_config.py
+      - src/features/math_functions.py
+      - src/features/process_features.py
+    outs:
+      - data/interim/data_featured.csv:
+          cache: false
+  split_train_predict:
+    cmd: ${common.root} && python src/data/split_train_predict.py data/interim/data_featured.csv data/processed/data_train.csv data/processed/data_predict.csv
+    params:
+      - ${common.config}:
+        - split_train_predict
+        - common.target
+        - common.date_col
+    deps:
+      - data/interim/data_featured.csv
+      - src/data/split_train_predict.py
+    outs:
+      - data/processed/data_train.csv
+      - data/processed/data_predict.csv:
+          cache: false
+  plot_exploratory:
+    cmd: ${common.root} && python src/visualization/plot_exploratory.py data/processed/data_train.csv reports/figures/exploratory/
+    params:
+      - ${common.config}:
+        - plot_exploratory
+        - common.target
+    deps:
+      - data/processed/data_train.csv
+      - src/visualization/plot_exploratory.py 
+    outs:
+      - reports/figures/exploratory/:
+          persist: True
+          cache: False
+  plot_feature_importances:
+    cmd: ${common.root} && python src/visualization/plot_feature_importance.py data/processed/data_train.csv reports/figures/importance/
+    params:
+      - ${common.config}:
+        - plot_feature_importance
+        - common.target
+        - common.seed
+    deps:
+      - data/processed/data_train.csv
+      - src/visualization/plot_feature_importance.py 
+    plots:
+      - reports/figures/importance/pfi_perm_feature_importances.png:
+          cache: True
+  explore_train_model:
+    cmd: ${common.root} && python src/models/explore_train_model.py data/processed/data_train.csv models/metadata/ models/
+    params:
+      - ${common.config}:
+        - explore_train_model
+        - common.target
+        - common.date_col
+        - common.seed
+    deps:
+      - data/processed/data_train.csv
+      - src/models/explore_train_model.py
+    outs:
+      - models/metadata/:
+          persist: True
+          cache: False
+      - models/lm_model.pkl
+    metrics:
+      - models/metrics.json:
+          cache: False
+    plots:
+      - models/lc_plot.csv:
+          cache: True
+          x: train_size
+          y: test_mean
+          title: "Learning test curve MAE"
+      - models/lc_plot_.csv:
+          cache: True
+          x: train_size
+          y: train_mean
+          title: "Learning train curve MAE"
+  predict:
+    cmd: ${common.root} && python src/models/predict.py data/processed/data_predict.csv models/lm_model.pkl models/prediction/predictions.csv
+    params:
+      - ${common.config}:
+        - explore_train_model.features.include
+        - explore_train_model.features.exclude
+        - common.target
+        - common.date_col
+    deps:
+      - data/processed/data_predict.csv
+      - src/models/predict.py
+      - models/lm_model.pkl
+    outs:
+      - models/prediction/predictions.csv:
+          cache: False

@@ -11,6 +11,7 @@ clip_outliers:
     upper: 0.95
   iqr_clip:
     exclude: [date, hors, hour, wd, wp, windfarm]
+
 split_train_predict:
   train_rows:
     dates: ['2009-07-02 13:00:00', '2012-06-25 00:00:00']
@@ -18,6 +19,7 @@ split_train_predict:
   predict_rows:
     dates: ['2011-01-01 01:00:00', '2012-06-25 00:00:00' ]
     is_na: True
+
 plot_exploratory:
   features:
     include: [windfarm, hour, ws, wd_sin, wd_cos, side, ws-wd_cos, ws_frac, ws_log, ws_med24, ws_l3, ws_l12] # all
@@ -38,6 +40,7 @@ plot_exploratory:
     kind: reg
     diag_kind: kde
     alpha: 0.3
+
 plot_feature_importance:
   features:
     include: all
@@ -58,6 +61,7 @@ plot_feature_importance:
     set_plot_params: True
     figsize: [30, 15]
     fontsize:
+
 explore_train_model:
   features:
     date_period: ['2009-07-02 13:00:00', '2012-06-25 00:00:00']
@@ -73,17 +77,17 @@ explore_train_model:
     regressor__model__fit_intercept: True
     regressor__model__alpha: 30
   params_search:
-    is_on: True
-    n_jobs: 4
+    is_on: False
+    n_jobs: -1
     grid_params:
       n_splits: 5
       scoring: neg_mean_absolute_error
       regressor__model__alpha:
         - vals
-        - [0.01] # np.logspace(-3, 3, num=25)
+        - [0.01] # np.logspace(-3, 3, num=25) -> [log, -3, 1, 5]
       regressor__feature_selector__threshold:
         - vals
-        - ["0.4*median"] #"0.6*median", "0.8*median", "1.0*median", "1.1*median"]
+        - ["0.2*median"] #"0.6*median", "0.8*median", "1.0*median", "1.1*median"]
     cv_params:
       n_splits: 5
       return_train_score: True
@@ -98,13 +102,13 @@ explore_train_model:
       hover_cols: [test_MAE] # +grid_params
       figsize: [20, 10]
   plot_learning_curve:
-    is_on: True
-    n_jobs: 4
+    is_on: False
+    n_jobs: -1
     scoring: neg_mean_absolute_error
     figsize: [20, 10]
-    n_splits: 10
+    n_splits: 5
   mlflow_config:
-    mlflow_description: "Test TransformedTargetRegressor"
+    mlflow_description: "Test GitHub CI"
     mlflow_tags:
       model: Ridge
       selector: ExtraTreesRegressor

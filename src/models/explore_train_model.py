@@ -429,6 +429,7 @@ def run_tuning_eval_train(input_filepath: str,
     target_name: str
     best_params: dict[str, str | float]
     metrics_dict: dict[str, dict[str, float]] = {}
+    df_lc: pd.DataFrame = pd.DataFrame([])
         
     # read section
     save_folder = Path(Path(".") / output_folder)
@@ -448,12 +449,15 @@ def run_tuning_eval_train(input_filepath: str,
           "plot_learning_curve",
           'mlflow_config']
     )
-    best_params = linear_model_cfg["model_params"]
+    best_params = linear_model_cfg["model_params"].copy()
     scoring_names = ["test_" + metric_
                      for metric_ in params_search_cfg["cv_params"]["scoring"].keys()]
     (target_name, seed, date_col) = get_data_config("common",
         ["target", "seed", "date_col"]
     )
+    # chnage for CI/CD
+    if os.getenv("MLFLOW_TRACKING_URI"):
+        mlflow_config_cfg["experiment_name"] = os.getenv("MLFLOW_EXPERIMENT_NAME")
     (mlflow_description, mlflow_tags, experiment_name) = (
         mlflow_config_cfg["mlflow_description"],
         mlflow_config_cfg["mlflow_tags"],
@@ -487,7 +491,7 @@ def run_tuning_eval_train(input_filepath: str,
                             **linear_model_cfg["model_params"])
         
         if params_search_cfg["is_on"]:
-        
+            print("Params search starting")
             cv_results = param_search(data, df_target, model,
                                     params_search_cfg["n_jobs"],
                                     params_search_cfg["grid_params"],
@@ -507,14 +511,12 @@ def run_tuning_eval_train(input_filepath: str,
             save_plot(cv_plot, save_folder / "cv_plot.html") 
         
         if plot_learning_curve_cfg["is_on"]:
+            print("Learning curve starting")
             lc_plot, df_lc = plot_learning_curve(data, df_target, model,
                                                 best_params,
                                                 plot_learning_curve_cfg,
                                                 seed)
             save_plot(lc_plot, save_folder / "lc_plot.png")
-            df_lc.to_csv(model_folder / "lc_plot.csv", index=False)
-            df_lc.to_csv(model_folder / "lc_plot_.csv", index=False)
-            print(f"Save learning curve params as {model_folder / 'lc_plot.csv'}")
         
         # last train of the model
         model, metrics_dict, coefs = train_model(model,
@@ -524,6 +526,9 @@ def run_tuning_eval_train(input_filepath: str,
                                                  metrics_dict)
         
         # save section
+        df_lc.to_csv(model_folder / "lc_plot.csv", index=False)
+        df_lc.to_csv(model_folder / "lc_plot_.csv", index=False)
+        print(f"Save learning curve params as {model_folder / 'lc_plot.csv'}")
         coefs.to_csv(save_folder / "lm_coefs.csv")
         print(f"Save linear model coefficients as {save_folder / 'lm_coefs.csv'}")
         with open(model_folder / "metrics.json", 'w', encoding='utf-8') as mets_json:

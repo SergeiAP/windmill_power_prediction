@@ -115,8 +115,8 @@ stages:
           x: train_size
           y: train_mean
           title: "Learning train curve MAE"
-  predict_model:
-    cmd: ${common.root} && python src/models/predict_model.py data/processed/data_predict.csv models/lm_model.pkl models/prediction/predictions.csv
+  predict:
+    cmd: ${common.root} && python src/models/predict.py data/processed/data_predict.csv models/lm_model.pkl models/prediction/predictions.csv
     params:
       - ${common.config}:
         - explore_train_model.features.include
@@ -125,7 +125,7 @@ stages:
         - common.date_col
     deps:
       - data/processed/data_predict.csv
-      - src/models/predict_model.py
+      - src/models/predict.py
       - models/lm_model.pkl
     outs:
       - models/prediction/predictions.csv:
