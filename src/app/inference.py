@@ -65,13 +65,13 @@ async def predict(file: UploadFile = File(...)) -> list[str]:
             file_.write(file.file.read())
         data = pd.read_csv(file.filename)
         os.remove(file.filename)
-        # Return a JSON object containing the model predicitons
-        return list(model.predict(data))
     else:
         # Raise a HTTP 400 Exception, indicating Bad Request
         # (you can learn more about HTTP response status codes here)
         raise HTTPException(
             status_code=400, detail="Invalid file format. CSV-only files accpeted.")
+    # Return a JSON object containing the model predicitons
+    return list(model.predict(data))
 
 @app.post("/test")
 async def test_predictions(file: UploadFile = File(...)) -> dict:
@@ -100,12 +100,12 @@ async def test_predictions(file: UploadFile = File(...)) -> dict:
         df_pred["predictions"] = model.predict(data)
         print(mean_absolute_error(df_pred["wp"], df_pred["predictions"]))
         
-        return df_pred.to_dict(orient='list')
     else:
         # Raise a HTTP 400 Exception, indicating Bad Request
         # (you can learn more about HTTP response status codes here)
         raise HTTPException(
             status_code=400, detail="Invalid file format. CSV-only files accpeted.")
+    return df_pred.to_dict(orient='list')
 
 # Check if the environment varibales for AWS access are available
 # If not, exit the program
