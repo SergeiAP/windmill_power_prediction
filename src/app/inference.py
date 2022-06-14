@@ -61,8 +61,8 @@ async def create_upload_file(file: UploadFile = File(...)) -> list[str]:
     # Handle the file in csv-only format
     if file.filename.endswith(".csv"):
         # Create a temprorary file to load the data into a pd.DataFrame
-        with open(file.filename, "wb") as f:
-            f.write(file.file.read())
+        with open(file.filename, "wb") as file_:
+            file_.write(file.file.read())
         data = pd.read_csv(file.filename)
         os.remove(file.filename)
         # Return a JSON object containing the model predicitons

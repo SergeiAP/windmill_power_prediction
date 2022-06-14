@@ -24,18 +24,17 @@ from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_absolute_error
-from sklearn.model_selection import (GridSearchCV, ShuffleSplit,
+from sklearn.model_selection import (GridSearchCV, ShuffleSplit, 
                                      cross_validate, learning_curve)
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from src.read_config import get_data_config
-from src.visualization.plot_utils import (  # pylint: disable=import-error
-    save_plot, set_plot_params)
+from src.visualization.plot_utils import save_plot, set_plot_params
 
 
-def linear_model(df_cols: list[str],
-                 cat_cols: list[str],
-                 random_state: int,
+def linear_model(df_cols: list[str], 
+                 cat_cols: list[str], 
+                 random_state: int, 
                  **model_params
                  ) -> TransformedTargetRegressor:
     """
@@ -530,8 +529,8 @@ def run_tuning_eval_train(input_filepath: str,
         with open(model_folder / "metrics.json", 'w', encoding='utf-8') as mets_json:
             json.dump(metrics_dict, mets_json, indent=4)
         print(f"Save metrics as {save_folder / 'metrics.json'}")
-        with open(model_folder / "lm_model.pkl",'wb') as f:
-            pickle.dump(model, f)
+        with open(model_folder / "lm_model.pkl",'wb') as file_:
+            pickle.dump(model, file_)
         print(f"Save model as {model_path}/lm_model.pkl")
         
         # log for mlflow

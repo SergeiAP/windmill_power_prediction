@@ -1,7 +1,7 @@
 [tool.pylint.format]
 max-line-length = 88
 variable-rgx = "[a-z_][a-z0-9_]{1,30}$"
-disable = C0303
+disable = "C0303"
 signature-mutators = [click.decorators.argument]
 
 [tool.black]
