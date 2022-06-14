@@ -13,7 +13,7 @@ clip_outliers:
     exclude: [date, hors, hour, wd, wp, windfarm]
 split_train_predict:
   train_rows:
-    dates: ['2009-07-02 13:00:00', '2012-06-25 00:00:00' ]
+    dates: ['2009-07-02 13:00:00', '2012-06-25 00:00:00']
     is_na: False
   predict_rows:
     dates: ['2011-01-01 01:00:00', '2012-06-25 00:00:00' ]
@@ -60,30 +60,30 @@ plot_feature_importance:
     fontsize:
 explore_train_model:
   features:
-    date_period: ['2010-01-01 00:00:00', '2011-01-01 00:00:00']
+    date_period: ['2009-07-02 13:00:00', '2012-06-25 00:00:00']
     include: all # all or [...]
-    exclude: [date, hour, side, month]
+    exclude: [date, wd_cos_d2s1, wd_sin_d2s1, ws_d2s1, wd_sin_d2s3, wd_cos_d2s3, ws_d2s3]
   set_plot_params:
     is_on: True
   linear_model:
    cat_cols: [windfarm]
    model_params:
-    feature_selector__threshold: "1.0*median"
-    feature_selector__estimator__min_samples_leaf: 30
-    model__fit_intercept: True
-    model__alpha: 30
+    regressor__feature_selector__threshold: "1.0*median"
+    regressor__feature_selector__estimator__min_samples_leaf: 30
+    regressor__model__fit_intercept: True
+    regressor__model__alpha: 30
   params_search:
     is_on: True
-    n_jobs: -1
+    n_jobs: 4
     grid_params:
       n_splits: 5
       scoring: neg_mean_absolute_error
-      model__alpha:
-        - func
-        - [log, -2, 2, 20] # np.logspace(-3, 3, num=25)
-      feature_selector__threshold:
+      regressor__model__alpha:
         - vals
-        - ["0.4*median", "0.8*median", "1.2*median"] #"0.6*median", "0.8*median", "1.0*median", "1.1*median"]
+        - [0.01] # np.logspace(-3, 3, num=25)
+      regressor__feature_selector__threshold:
+        - vals
+        - ["0.4*median"] #"0.6*median", "0.8*median", "1.0*median", "1.1*median"]
     cv_params:
       n_splits: 5
       return_train_score: True
@@ -94,12 +94,19 @@ explore_train_model:
       scoring: "test_MAE"
       metrics_to_track:
         test: [MSE, MAE, MAE_median, MAE_std, MAE_eval]
-      x_axis: "model__alpha"
-      hover_cols: ["test_MAE"] # +grid_params
+      x_axis: regressor__model__alpha
+      hover_cols: [test_MAE] # +grid_params
       figsize: [20, 10]
   plot_learning_curve:
     is_on: True
-    n_jobs: -1
+    n_jobs: 4
     scoring: neg_mean_absolute_error
     figsize: [20, 10]
     n_splits: 10
+  mlflow_config:
+    mlflow_description: "Test TransformedTargetRegressor"
+    mlflow_tags:
+      model: Ridge
+      selector: ExtraTreesRegressor
+      windfarm: categorical
+    experiment_name: selector-ridge_model

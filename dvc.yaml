@@ -64,6 +64,7 @@ stages:
     params:
       - ${common.config}:
         - plot_exploratory
+        - common.target
     deps:
       - data/processed/data_train.csv
       - src/visualization/plot_exploratory.py 
@@ -76,6 +77,8 @@ stages:
     params:
       - ${common.config}:
         - plot_feature_importance
+        - common.target
+        - common.seed
     deps:
       - data/processed/data_train.csv
       - src/visualization/plot_feature_importance.py 
@@ -87,6 +90,9 @@ stages:
     params:
       - ${common.config}:
         - explore_train_model
+        - common.target
+        - common.date_col
+        - common.seed
     deps:
       - data/processed/data_train.csv
       - src/models/explore_train_model.py
@@ -104,14 +110,23 @@ stages:
           x: train_size
           y: test_mean
           title: "Learning test curve MAE"
+      - models/lc_plot_.csv:
+          cache: True
+          x: train_size
+          y: train_mean
+          title: "Learning train curve MAE"
   predict_model:
     cmd: ${common.root} && python src/models/predict_model.py data/processed/data_predict.csv models/lm_model.pkl models/prediction/predictions.csv
     params:
       - ${common.config}:
-        - explore_train_model.features
+        - explore_train_model.features.include
+        - explore_train_model.features.exclude
+        - common.target
+        - common.date_col
     deps:
       - data/processed/data_predict.csv
       - src/models/predict_model.py
+      - models/lm_model.pkl
     outs:
       - models/prediction/predictions.csv:
           cache: False

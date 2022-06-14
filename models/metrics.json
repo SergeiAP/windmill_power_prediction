@@ -1,10 +1,10 @@
 {
     "test": {
-        "MAE": 0.121,
-        "MAE_eval": 0.122,
-        "MAE_median": 0.121,
-        "MAE_std": 0.00053,
-        "MSE": 0.026
+        "MSE": 0.02733,
+        "MAE": 0.11543,
+        "MAE_median": 0.11598,
+        "MAE_std": 0.00059,
+        "MAE_eval": 0.11657
     },
     "train": {
         "MAE": 0.12

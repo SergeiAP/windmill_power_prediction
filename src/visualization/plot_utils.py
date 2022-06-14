@@ -1,11 +1,11 @@
 # pylint: disable=missing-module-docstring
 from pathlib import Path
 
-import matplotlib.pyplot as plt
-from plotly.graph_objs._figure import Figure as plotly_Figure
 import matplotlib.axes as mpl_axes
 import matplotlib.figure as mpl_figure
+import matplotlib.pyplot as plt
 import seaborn as sns
+from plotly.graph_objs._figure import Figure as plotly_Figure
 from pylab import rcParams  # type: ignore
 
 

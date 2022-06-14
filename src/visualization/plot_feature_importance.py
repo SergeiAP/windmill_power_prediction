@@ -43,18 +43,18 @@ def get_permutation_importance(df: pd.DataFrame,
         sklearn_bunch: results of permutation_importance in dict-alike format
     """
     feature_cols = df.columns.drop(target_col)
-    X_train, X_test, y_train, y_test = train_test_split(df[feature_cols],
+    x_train, x_test, y_train, y_test = train_test_split(df[feature_cols],
                                                         df[target_col],
                                                         random_state=random_state,
                                                         **train_test_cfg)
     rf = ExtraTreesRegressor(random_state=random_state,
                              **random_forest_cfg)
-    rf.fit(X_train, y_train)
+    rf.fit(x_train, y_train)
     print(f"Permeation: random forest MAE is "
-          f"{mean_absolute_error(rf.predict(X_test), y_test):.3f}")
+          f"{mean_absolute_error(rf.predict(x_test), y_test):.3f}")
     
     result = permutation_importance(
-        rf, X_test, y_test, n_repeats=n_repeats, random_state=random_state, n_jobs=-1)
+        rf, x_test, y_test, n_repeats=n_repeats, random_state=random_state, n_jobs=-1)
     return result
 
 
@@ -107,7 +107,7 @@ def plot_power_prediciton(df: pd.DataFrame,
         mpl_axes.Axes: matplotlib axis
     """
     plt.figure(figsize=figsize)
-    pps_matrix = pps.matrix(df).loc[:,['x', 'y', 'ppscore']]
+    pps_matrix = pps.matrix(df).loc[:,['x', 'y', 'ppscore']]  # type: ignore
     matrix_df = pps_matrix.pivot(columns='x', index='y', values='ppscore')
     heatmap = sns.heatmap(matrix_df,
                           vmin=0, vmax=1,

@@ -3,20 +3,127 @@ windmill_power_prediction
 
 Data Science case for windmill power prediction based on weather. Based on Data Challenge of Air Liquide and TotalEnergies companies in 2021. The link of the competition is https://datascience.total.com/fr/challenge/19/details#.
 
-Docker commands:
+# 1. Project structure
+
+    ├── LICENSE
+    ├── README.md          <- The top-level README for developers using this project.
+    ├── data
+    │   ├── external       <- Data from third party sources.
+    │   ├── interim        <- Intermediate data that has been transformed.
+    │   ├── processed      <- The final, canonical data sets for modeling.
+    │   └── raw            <- The original, immutable data dump.
+    │
+    ├── docs               <- A default Sphinx project; see sphinx-doc.org for details.
+    │
+    ├── models             <- Trained and serialized models, model predictions, or model summaries.
+    │   ├── metadata       <- Support files for model train/test.
+    │   ├── prediction     <- Generated predictions by `predict_model` step.
+    │   ├── lm_model.pkl   <- Saved model.
+    │   └── metrics.json   <- Metrics of last model train and test.
+    │
+    ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
+    │   |                     the creator's initials, and a short `-` delimited description, e.g.
+    │   |                     `0.0.Parshin-windfarms-analysis.ipynb`.
+    │   └── project_describtion.ipynb   <- Common sandbox which going to be documentation for the 
+    │                         project.
+    │
+    ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
+    │
+    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
+    │   └── figures        <- Generated graphics and figures to be used in reporting.
+    │       |
+    │       ├── exploratory<- Forlder to store exploratory analysis artifacts.
+    │       └── importance <- Folder to store feature importance investigations artifacts.
+    │
+    ├── sample_request     <- Examples of data and commands for API service. 
+    │
+    ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported.
+    ├── src                <- Source code for use in this project.
+    │   ├── __init__.py    <- Makes src a Python module.
+    │   │
+    │   ├── app               <- Scripts for API service.
+    │   │   └── inference.py  <- General script for API service.
+    │   │
+    │   ├── data           <- Scripts to download or generate data.
+    │   │   │ 
+    │   │   ├── aggregate_weather_config.py  <- Config for `aggregate_weather.py`.
+    │   │   ├── aggregate_weather.py         <- Main script. Aggregate weather features in chosen way.
+    │   │   ├── process_weather.py           <- Proccess script for `affrefate_weather.py`.
+    │   │   ├── clip_outliers.py             <- Clip outlier data based on predefined method.
+    │   │   ├── merge_data.py                <- Merge several files of dataset.
+    │   │   └── split_train_predict.py       <- Split dataset on train and predict datasets.
+    │   │
+    │   ├── features       <- Scripts to turn raw data into features for modeling.
+    │   │   │ 
+    │   │   ├── create_features_config.py    <- Config for `create_features.py`.
+    │   │   ├── create_features.py           <- Main script. Create chosen in config features in chosen 
+    │   │   │                                   order.
+    │   │   ├── math_functions.py            <- Math functions to prepare features.
+    │   │   └── process_features.py          <- Process script for features in `create_features.py`.
+    │   │
+    │   ├── models         <- Scripts to train models and then use trained models to make
+    │   │   │                 predictions.
+    │   │   ├── explore_train_model.py  <- Explore model, make cross-validation, choose parametrs for
+    │   │   │                              the model and train best model.    
+    │   │   └── predict_model.py        <- Make predictions based on prediction dataset.
+    │   │
+    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations.
+    │       │ 
+    │       ├── plot_exploratory.py         <- Make exploratory analysis.
+    │       ├── plot_feature_importance.py  <- Explore feature importance.
+    │       └── plot_unitls.py              <- Common functions for any plot.
+    │
+    ├── Docker             <- Services dockerfiles and required for building files.
+    │   ├── minio          <- For Docker volume for `minio` service.
+    │   ├── mlflow_image   <- Folder for files to create mlflow image.
+    │   ├── model_service  <- Folder for files to create API.
+    │   ├── pgadmin        <- For Docker volume for `pgadmin` service.
+    │   └── nginx.conf     <- Config for nginx for nginx image.
+    │
+    ├── .dvc               <- Folder for `DVC` files (`DVC` - data version control and DAG - directed 
+    │   │                     acyclic graph service)
+    │   └── config         <- Config for dvc with params for remote service like S3
+    │
+    ├── .github            <- Folder for `githib` services, CI/CD
+    │   │                     
+    │   └── workflows
+    │       └── python-codestyle.yml <- CI file for github
+    │
+    ├── .env.example       <- `.env` example with mandatory variables 
+    │
+    │
+    ├── conda.yml          <- The requirements file for reproducing the analysis environment, e.g.
+    │                         generated with `conda env export > conda.yml` and reproducable by 
+    │                         `conda env create -n windmill_power_prediction -f conda.yml`
+    │
+    ├── dvc.lock           <- `DVC` file to track changes in versioned files
+    │
+    ├── dvc.yaml           <- `DVC` file with DAG pipeline of the project 
+    │    
+    └── pyproject.toml     <- toml file with settings for linters etc.
+
+
+# X. Useful commands
+Useful docker commands:
 ```bash
-docker-compose up -d --build
+# create image for mlflow
+docker build -f Docker/mlflow_image/Dockerfile -t wpp_mlflow_server .
+# create image for API service
 docker build -f Docker/model_service/Dockerfile -t wpp_model_service .
+# general command to build and run all docker services in `docker-compose.yml`
+docker-compose up -d --build
+# if it is required to build and run specific service
 docker-compose up -d --build app
+# to replace files in docker without creating new image and building container
 docker cp ./inference.py wpp_model_service:/code/app/inference.py
 ```
 
-To connect to database use:
+To connect to database in pgadmin use:
 ```bash
-docker ps
 # find the image postgres / container wpp_postgres, copy `CONTAINER ID`
-docker inspect `CONTAINER ID`
+docker ps
 # copy "IPAddress" in the end of the file, use it for database connection in `pgadmin`
+docker inspect `CONTAINER ID`
 ```
 
 To add S3-like (not AWS S3) as dvc remote use the following commands:
@@ -31,60 +138,15 @@ Check wheather port is busy in Windows/cmd (e.g. 5443)
 netstat -a -n -o | find "5443"`
 ```
 
-Save conda environment
+Conda commands
 ```bash
+# Export env
 conda env export > conda.yml
+# Import env
+conda env create -n windmill_power_prediction -f conda.yml
 ```
 
-Project Organization
-------------
-
-    ├── LICENSE
-    ├── Makefile           <- Makefile with commands like `make data` or `make train`
-    ├── README.md          <- The top-level README for developers using this project.
-    ├── data
-    │   ├── external       <- Data from third party sources.
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
-    │
-    ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
-    │
-    ├── models             <- Trained and serialized models, model predictions, or model summaries
-    │
-    ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │                         the creator's initials, and a short `-` delimited description, e.g.
-    │                         `1.0-jqp-initial-data-exploration`.
-    │
-    ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
-    │
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures        <- Generated graphics and figures to be used in reporting
-    │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
-    │
-    ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
-    ├── src                <- Source code for use in this project.
-    │   ├── __init__.py    <- Makes src a Python module
-    │   │
-    │   ├── data           <- Scripts to download or generate data
-    │   │   └── make_dataset.py
-    │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
-    │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
-    │   │
-    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │       └── visualize.py
-    │
-    └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
-
-
---------
-
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
+
+# Contacts
+Parshin Sergei / @ParshinSA / Sergei.A.P@yandex.com

@@ -1,22 +1,25 @@
 # pylint: disable=missing-module-docstring
 # TODO: change print to logs
 # TODO: split file
-import os
 import copy
+import json
+import os
 import pickle  # nosec B403
 import time
 from pathlib import Path
 from typing import Iterable
-import json
 
 import click
 import matplotlib.pyplot as plt
+import mlflow
 import numpy as np
 import pandas as pd
 import plotly.express as px
+from dotenv import load_dotenv
 from matplotlib.figure import Figure as mpl_figure
+from mlflow.models.signature import infer_signature
 from plotly.graph_objs._figure import Figure as plotly_Figure
-from sklearn.compose import ColumnTransformer
+from sklearn.compose import ColumnTransformer, TransformedTargetRegressor
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import Ridge
@@ -29,17 +32,12 @@ from src.read_config import get_data_config
 from src.visualization.plot_utils import (  # pylint: disable=import-error
     save_plot, set_plot_params)
 
-import mlflow
-from mlflow.models.signature import infer_signature
-from mlflow.tracking import MlflowClient
-from dotenv import load_dotenv
-
 
 def linear_model(df_cols: list[str],
                  cat_cols: list[str],
                  random_state: int,
                  **model_params
-                 ) -> Pipeline:
+                 ) -> TransformedTargetRegressor:
     """
     Create linear model pipeline with `cat`, `num` preprocessing and `SelectFromModel`
 
@@ -49,7 +47,7 @@ def linear_model(df_cols: list[str],
         random_state (int): random seed
 
     Returns:
-        Pipeline: sklearn model
+        TransformedTargetRegressor: sklearn model
     """
     # TODO: implement OneLeaveGroupOut as cv
     
@@ -67,27 +65,55 @@ def linear_model(df_cols: list[str],
     model_pipe = Pipeline(steps=[("preprocesor", preprocessor),
                                  ("feature_selector", selector),
                                  ("model", regressor)])
+    model_pipe = TransformedTargetRegressor(regressor=model_pipe,
+                                            func=func,
+                                            inverse_func=inverse_func)
     model_pipe.set_params(**model_params) # set params for the model
     
     return model_pipe
 
+def func(vals: np.ndarray) -> np.ndarray:
+    """Target transform function for TransformedTargetRegressor
 
-def train_model(model: Pipeline,
+    Args:
+        vals (np.ndarray): tartet col
+
+    Returns:
+        np.ndarray: transformed tagret
+    """
+    return np.log(vals + 0.1)
+
+def inverse_func(vals: np.ndarray) -> np.ndarray:
+    """Reverse target transform function for TransformedTargetRegressor
+
+    Args:
+        vals (np.ndarray): transformed target col
+
+    Returns:
+        np.ndarray: reverse transform target
+    """
+    return np.exp(vals) - 0.1
+
+
+def train_model(model: TransformedTargetRegressor,
                 data: pd.DataFrame,
                 target: pd.Series,
                 best_params: dict[str, str | float],
                 metrics_dict: dict[str, dict[str, float]],
-                ) -> tuple[Pipeline, dict[str, dict[str, float]], pd.DataFrame]:
+                ) -> tuple[TransformedTargetRegressor,
+                           dict[str, dict[str, float]],
+                           pd.DataFrame]:
     """Train model without testing on full dataset
 
     Args:
-        model (Pipeline): model to be trained
+        model (TransformedTargetRegressor): model to be trained
         data (pd.DataFrame): data for training
         target (pd.Series): target
         best_params (dict[str, str  |  float]): params for `model`
 
     Returns:
-        tuple[Pipeline, pd.DataFrame]: trained model and `coefs` for linear model
+        tuple[TransformedTargetRegressor, pd.DataFrame]: trained model and `coefs` for 
+        linear model
     """
     intercept = 0 # by default
     
@@ -99,12 +125,13 @@ def train_model(model: Pipeline,
     print(f"Train MAE is: {mae_ :.2f}")
     # For linear models only
     
-    if hasattr(model[-1], 'intercept_'):
-        intercept = model[-1].intercept_                            # type: ignore
-    if hasattr(model[-1], 'coef_'):
-        feature_names = np.append(model[:-1].get_feature_names_out(),    # type: ignore
-                                  ["intercept"])
-        coefs = pd.DataFrame(np.append(model[-1].coef_,                  # type: ignore
+    if hasattr(model.regressor_[-1], 'intercept_'):  # type: ignore
+        intercept = model.regressor_[-1].intercept_  # type: ignore
+    if hasattr(model.regressor_[-1], 'coef_'):       # type: ignore
+        feature_names = np.append(
+            model.regressor_[:-1].get_feature_names_out(),         # type: ignore
+            ["intercept"])
+        coefs = pd.DataFrame(np.append(model.regressor_[-1].coef_, # type: ignore
                                        [intercept]), 
                             columns=['coefficients'], index=feature_names)
         coefs.index.name = "feature_name" 
@@ -114,7 +141,7 @@ def train_model(model: Pipeline,
 
 def param_search(data: pd.DataFrame,
                  target: pd.Series,
-                 model: Pipeline,
+                 model: TransformedTargetRegressor,
                  n_jobs: int,
                  grid_params: dict,
                  cv_params: dict,
@@ -124,7 +151,7 @@ def param_search(data: pd.DataFrame,
     Args:
         data (pd.DataFrame): data with features for searhing
         target (pd.Series): target
-        model (Pipeline): sklearn pipeline model
+        model (TransformedTargetRegressor): sklearn pipeline model
         n_jobs (int): number of jobs/processors to be used in searching, 
         -1 - all procesors
         grid_params (dict): params for searching in `GridSearchCV`
@@ -324,7 +351,7 @@ def plot_param_search(df_cv_exp: pd.DataFrame,
     
 def plot_learning_curve(data: pd.DataFrame,
                         target: pd.Series,
-                        model: Pipeline,
+                        model: TransformedTargetRegressor,
                         best_params: dict[str, str | float],
                         plot_learning_curve_cfg: dict,
                         random_state: int,
@@ -336,7 +363,8 @@ def plot_learning_curve(data: pd.DataFrame,
     Args:
         data (pd.DataFrame): data with features
         target (pd.Series): target
-        model (Pipeline): model to be fitted and to plot learning curve
+        model (TransformedTargetRegressor): model to be fitted and to plot learning
+        curve
         best_params (dict[str, str  |  float]): best model params to be used
         plot_learning_curve_cfg (dict): config for learning_curve
         random_state (int): seed
@@ -412,102 +440,118 @@ def run_tuning_eval_train(input_filepath: str,
      set_plot_params_cfg,
      linear_model_cfg,
      params_search_cfg,
-     plot_learning_curve_cfg) = get_data_config("explore_train_model", 
+     plot_learning_curve_cfg,
+     mlflow_config_cfg) = get_data_config("explore_train_model", 
          ["features",
           "set_plot_params",
           "linear_model",
           "params_search",
-          "plot_learning_curve"]
+          "plot_learning_curve",
+          'mlflow_config']
     )
     best_params = linear_model_cfg["model_params"]
     scoring_names = ["test_" + metric_
                      for metric_ in params_search_cfg["cv_params"]["scoring"].keys()]
     (target_name, seed, date_col) = get_data_config("common",
-                                                    ["target", "seed", "date_col"])
-    if set_plot_params_cfg["is_on"]:
-        set_plot_params()
-    
-    df = df.loc[(df[date_col] >= features["date_period"][0])
-                & (df[date_col] <= features["date_period"][1]), :]
-    df_target: pd.Series = df.loc[:, target_name]
-    df = (df.loc[:, features["include"]] if isinstance(features["include"], list) else 
-          (df.loc[:, df.columns.drop(target_name).to_list()]))
-    data = df.drop(features["exclude"], axis="columns")
-    
-    model = linear_model(data.columns.to_list(),
-                         linear_model_cfg["cat_cols"],
-                         seed,
-                         **linear_model_cfg["model_params"])
-    
-    if params_search_cfg["is_on"]:
-    
-        cv_results = param_search(data, df_target, model,
-                                  params_search_cfg["n_jobs"],
-                                  params_search_cfg["grid_params"],
-                                  params_search_cfg["cv_params"],
-                                  seed)
-        df_cv_exp, metrics_dict, best_params = explore_param_search(
-            cv_results,
-            params_search_cfg["plot_param_search"]["scoring"],
-            scoring_names,
-            params_search_cfg["plot_param_search"]["metrics_to_track"],
-            )
-        df_cv_exp.to_csv(save_folder / "cv_result.csv", index=False)
-        print(f"Save cross-validation exploration results "
-              f"as {save_folder / 'cv_result.csv'}")
-        
-        cv_plot = plot_param_search(df_cv_exp, params_search_cfg, [*best_params])
-        save_plot(cv_plot, save_folder / "cv_plot.html") 
-    
-    if plot_learning_curve_cfg["is_on"]:
-        lc_plot, df_lc = plot_learning_curve(data, df_target, model,
-                                             best_params,
-                                             plot_learning_curve_cfg,
-                                             seed)
-        save_plot(lc_plot, save_folder / "lc_plot.png")
-        df_lc.to_csv(model_folder / "lc_plot.csv", index=False)
-        print(f"Save learning curve params as {model_folder / 'lc_plot.csv'}")
-    
-    model, metrics_dict, coefs = train_model(model,
-                                             data,
-                                             df_target,
-                                             best_params,
-                                             metrics_dict)
-    
-    # save section
-    coefs.to_csv(save_folder / "lm_coefs.csv")
-    print(f"Save linear model coefficients as {save_folder / 'lm_coefs.csv'}")
-    with open(model_folder / "metrics.json", 'w', encoding='utf-8') as metrics_json:
-        json.dump(metrics_dict, metrics_json, indent=4)
-    print(f"Save metrics as {save_folder / 'metrics.json'}")
-    with open(model_folder / "lm_model.pkl",'wb') as f:
-        pickle.dump(model, f)
-    print(f"Save model as {model_path}/lm_model.pkl")
-    
-    
+        ["target", "seed", "date_col"]
+    )
+    (mlflow_description, mlflow_tags, experiment_name) = (
+        mlflow_config_cfg["mlflow_description"],
+        mlflow_config_cfg["mlflow_tags"],
+        mlflow_config_cfg["experiment_name"])
     load_dotenv()
     remote_server_uri = os.getenv("MLFLOW_TRACKING_URI")
-    experiment_name = "selector-ridge_model"
     mlflow.set_tracking_uri(remote_server_uri) # type: ignore
-    experiment_id = mlflow.set_experiment(experiment_name)
-    # signature store metadata for input-output of the model in mlflow
-    signature = infer_signature(data, df_target)
-    # mlflow log best params
-    mlflow.log_params(best_params)
-    # mlflow log metric score
-    mlflow_metric = {stage_ + "_" + metric_: vals 
-                    for stage_ in metrics_dict 
-                    for metric_, vals in metrics_dict[stage_].items()}
-    mlflow.set_tag("model", "Ridge")
-    mlflow.set_tag("selector", "ExtraTreesRegressor")
-    mlflow.set_tag("windfarm", "categorical")
-    mlflow.log_metrics(mlflow_metric)
-    mlflow.log_artifact(output_folder)
-    mlflow.log_artifact(exploratory_folder)
-    mlflow.sklearn.log_model(sk_model=model,
-                                artifact_path="selector-ridge_model",
-                                registered_model_name="wpp_selector-ridge",
-                                signature=signature)
+    if set_plot_params_cfg["is_on"]:
+        set_plot_params()
+    mlflow.set_experiment(experiment_name) # experiment_id
+    
+    with mlflow.start_run(description=mlflow_description, tags=mlflow_tags):
+        print("MLFLOW artifact uri:", mlflow.get_artifact_uri())
+        # prepare dataset
+        df = df.loc[(df[date_col] >= features["date_period"][0])
+                    & (df[date_col] <= features["date_period"][1]), :]
+        df_target: pd.Series = df.loc[:, target_name]
+        df = (df.loc[:, features["include"]] if isinstance(features["include"], list)
+              else (df.loc[:, df.columns.drop(target_name).to_list()]))
+        data = df.drop(features["exclude"], axis="columns")
+        # log params for MLFLOW
+        log_params = {"seed": seed,
+                    "rows_num": len(data),
+                    "date_start": features["date_period"][0],
+                    "date_end": features["date_period"][1]}
+        
+        # create model
+        model = linear_model(data.columns.to_list(),
+                            linear_model_cfg["cat_cols"],
+                            seed,
+                            **linear_model_cfg["model_params"])
+        
+        if params_search_cfg["is_on"]:
+        
+            cv_results = param_search(data, df_target, model,
+                                    params_search_cfg["n_jobs"],
+                                    params_search_cfg["grid_params"],
+                                    params_search_cfg["cv_params"],
+                                    seed)
+            df_cv_exp, metrics_dict, best_params = explore_param_search(
+                cv_results,
+                params_search_cfg["plot_param_search"]["scoring"],
+                scoring_names,
+                params_search_cfg["plot_param_search"]["metrics_to_track"],
+                )
+            df_cv_exp.to_csv(save_folder / "cv_result.csv", index=False)
+            print(f"Save cross-validation exploration results "
+                f"as {save_folder / 'cv_result.csv'}")
+            
+            cv_plot = plot_param_search(df_cv_exp, params_search_cfg, [*best_params])
+            save_plot(cv_plot, save_folder / "cv_plot.html") 
+        
+        if plot_learning_curve_cfg["is_on"]:
+            lc_plot, df_lc = plot_learning_curve(data, df_target, model,
+                                                best_params,
+                                                plot_learning_curve_cfg,
+                                                seed)
+            save_plot(lc_plot, save_folder / "lc_plot.png")
+            df_lc.to_csv(model_folder / "lc_plot.csv", index=False)
+            df_lc.to_csv(model_folder / "lc_plot_.csv", index=False)
+            print(f"Save learning curve params as {model_folder / 'lc_plot.csv'}")
+        
+        # last train of the model
+        model, metrics_dict, coefs = train_model(model,
+                                                 data,
+                                                 df_target,
+                                                 best_params,
+                                                 metrics_dict)
+        
+        # save section
+        coefs.to_csv(save_folder / "lm_coefs.csv")
+        print(f"Save linear model coefficients as {save_folder / 'lm_coefs.csv'}")
+        with open(model_folder / "metrics.json", 'w', encoding='utf-8') as mets_json:
+            json.dump(metrics_dict, mets_json, indent=4)
+        print(f"Save metrics as {save_folder / 'metrics.json'}")
+        with open(model_folder / "lm_model.pkl",'wb') as f:
+            pickle.dump(model, f)
+        print(f"Save model as {model_path}/lm_model.pkl")
+        
+        # log for mlflow
+        # signature store metadata for input-output of the model in mlflow
+        signature = infer_signature(data, df_target)
+        # mlflow log best params
+        mlflow.log_params(best_params)
+        for key_, val_ in log_params.items():
+            mlflow.log_param(key_, val_)
+        # mlflow log metric score
+        mlflow_metric = {stage_ + "_" + metric_: vals 
+                        for stage_ in metrics_dict 
+                        for metric_, vals in metrics_dict[stage_].items()}
+        mlflow.log_metrics(mlflow_metric)
+        mlflow.log_artifact(output_folder)
+        mlflow.log_artifact(exploratory_folder)
+        mlflow.sklearn.log_model(sk_model=model,
+                                 artifact_path=experiment_name,
+                                 registered_model_name="wpp_selector-ridge",
+                                 signature=signature)
 
     print(f"Execution time is {round((time.time() - start_time) / 60, 2)} minutes")
 

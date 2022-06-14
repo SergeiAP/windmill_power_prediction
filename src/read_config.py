@@ -1,11 +1,13 @@
 # pylint: disable=missing-module-docstring
+from pathlib import Path
+
 import yaml
 from yaml.loader import SafeLoader
 
 
 def get_data_config(section: str,
                     columns: list[str],
-                    path: str = "./src/config.yml") -> tuple:
+                    path: Path | str = "./src/config.yml") -> tuple:
     """Read config.yml and extract required params from specific section
     Args:
         section (str): name of params section

@@ -110,6 +110,7 @@ stages:
       size: 7923
     params:
       src/config.yml:
+        common.target: wp
         plot_exploratory:
           features:
             include:
@@ -157,10 +158,12 @@ stages:
       md5: bfc394140414cbe1a47566d087136644
       size: 77899595
     - path: src/visualization/plot_feature_importance.py
-      md5: 78c98a6faa16a3cdb8c8364d1355ca17
-      size: 7588
+      md5: 90acce78ee5e9d53b561f75ff2efb1a9
+      size: 7604
     params:
       src/config.yml:
+        common.seed: 42
+        common.target: wp
         plot_feature_importance:
           features:
             include: all
@@ -228,48 +231,49 @@ stages:
       md5: bfc394140414cbe1a47566d087136644
       size: 77899595
     - path: src/models/explore_train_model.py
-      md5: 44f306527064db8f25d631644132e560
-      size: 21617
+      md5: e95a0b74b7a08d4609c2166dff970f8c
+      size: 23572
     params:
       src/config.yml:
+        common.date_col: date
+        common.seed: 42
+        common.target: wp
         explore_train_model:
           features:
             date_period:
-            - '2010-01-01 00:00:00'
-            - '2011-01-01 00:00:00'
+            - '2009-07-02 13:00:00'
+            - '2012-06-25 00:00:00'
             include: all
             exclude:
             - date
-            - hour
-            - side
-            - month
+            - wd_cos_d2s1
+            - wd_sin_d2s1
+            - ws_d2s1
+            - wd_sin_d2s3
+            - wd_cos_d2s3
+            - ws_d2s3
           set_plot_params:
             is_on: true
           linear_model:
             cat_cols:
             - windfarm
             model_params:
-              feature_selector__threshold: 1.0*median
-              feature_selector__estimator__min_samples_leaf: 30
-              model__fit_intercept: true
-              model__alpha: 30
+              regressor__feature_selector__threshold: 1.0*median
+              regressor__feature_selector__estimator__min_samples_leaf: 30
+              regressor__model__fit_intercept: true
+              regressor__model__alpha: 30
           params_search:
             is_on: true
-            n_jobs: -1
+            n_jobs: 4
             grid_params:
               n_splits: 5
               scoring: neg_mean_absolute_error
-              model__alpha:
-              - func
-              - - log
-                - -2
-                - 2
-                - 20
-              feature_selector__threshold:
+              regressor__model__alpha:
+              - vals
+              - - 0.01
+              regressor__feature_selector__threshold:
               - vals
               - - 0.4*median
-                - 0.8*median
-                - 1.2*median
             cv_params:
               n_splits: 5
               return_train_score: true
@@ -285,7 +289,7 @@ stages:
                 - MAE_median
                 - MAE_std
                 - MAE_eval
-              x_axis: model__alpha
+              x_axis: regressor__model__alpha
               hover_cols:
               - test_MAE
               figsize:
@@ -293,26 +297,36 @@ stages:
               - 10
           plot_learning_curve:
             is_on: true
-            n_jobs: -1
+            n_jobs: 4
             scoring: neg_mean_absolute_error
             figsize:
             - 20
             - 10
             n_splits: 10
+          mlflow_config:
+            mlflow_description: Test TransformedTargetRegressor
+            mlflow_tags:
+              model: Ridge
+              selector: ExtraTreesRegressor
+              windfarm: categorical
+            experiment_name: selector-ridge_model
     outs:
     - path: models/lc_plot.csv
-      md5: de23cc5991dce0706973bfe20ccdc960
-      size: 961
+      md5: e08cb6c200cc401984a9a3570516dd62
+      size: 957
+    - path: models/lc_plot_.csv
+      md5: e08cb6c200cc401984a9a3570516dd62
+      size: 957
     - path: models/lm_model.pkl
-      md5: 3be375a8ac9eb840460bdb2b0b020c78
-      size: 35001418
+      md5: 2ab58a3ca44e3e1c308b547fd893e300
+      size: 35083606
     - path: models/metadata/
-      md5: feed90f8ec66ae3ed9ea2054d445da98.dir
-      size: 3757117
+      md5: 67f3241d48788a790e28a36d3cda8f95.dir
+      size: 3757230
       nfiles: 5
     - path: models/metrics.json
-      md5: 5ad9540b1c9ddb6b5796008445739b1e
-      size: 203
+      md5: d5695c491ec4f2f54c6baee9b0f812d3
+      size: 211
   predict_model:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/models/predict_model.py data/processed/data_predict.csv
       models/lm_model.pkl models/prediction/predictions.csv
@@ -325,17 +339,12 @@ stages:
       size: 1788
     params:
       src/config.yml:
-        explore_train_model.features:
-          date_period:
-          - '2010-01-01 00:00:00'
-          - '2011-01-01 00:00:00'
-          include: all
-          exclude:
-          - date
-          - hour
-          - side
-          - month
+        common.date_col: date
+        common.target: wp
+        explore_train_model.features.exclude:
+        - date
+        explore_train_model.features.include: all
     outs:
     - path: models/prediction/predictions.csv
-      md5: 5c8e89857b1f55cbdac353ff70064806
-      size: 1815308
+      md5: 96f5b7027fba26bf6e8d77729163eb21
+      size: 1815036
