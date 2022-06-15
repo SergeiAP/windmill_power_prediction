@@ -1,0 +1,80 @@
+name: Codestyle and integrity
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+env:
+  NODE_TLS_REJECT_UNAUTHORIZED: 0
+
+jobs:
+  build:
+    runs-on: [self-hosted, Windows]
+    strategy:
+      # For debbug purposes
+      fail-fast: true
+      matrix:
+        python-version: ["3.10.4"]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+    - name: Install dependencies
+      run: |
+        # because it is used local github-runner there are some problems to activate
+        # new env. Therefore it is easier to activate it's primary env.
+        # TODO: change such behaviour
+        conda deactivate
+        conda activate windmill_power_prediction
+        python --version
+        # python -m pip install -- upgrade pip
+        # pip install pylint black
+    - name: Analysing the code with pylint
+      run: |
+        pylint $(git ls-files '*.py') --disable=E0401 --fail-under=8
+      continue-on-error: true
+    - name: Format with black
+      run: |
+        black --check .
+      continue-on-error: true
+    - name: Check type hints by mypy
+      run: |
+        conda deactivate
+        conda activate windmill_power_prediction
+        mypy --ignore-missing-imports .gitignore
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --ignore E999
+
+  integrity:
+    runs-on: [self-hosted, Windows]
+    needs: build
+    strategy:
+      # For debbug purposes
+      fail-fast: true
+      matrix:
+        python-version: ["3.10.4"]
+    steps:
+    - uses: actions/checkout@v3  
+    - name: Set dvc.yaml for CI
+      run: copy ./.github/dvc_.yaml ./dvc.yaml
+    - name: Run dvc workflow
+      run: |
+        conda deactivate
+        conda activate windmill_power_prediction
+        dvc pull
+        dvc repro
+      env:
+        MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+        MLFLOW_TRACKING_INSECURE_TLS: ${{ secrets.MLFLOW_TRACKING_INSECURE_TLS }}
+        MLFLOW_S3_ENDPOINT_URL: ${{ secrets.MLFLOW_S3_ENDPOINT_URL }}
+        MLFLOW_EXPERIMENT_NAME: ${{ secrets.MLFLOW_EXPERIMENT_NAME }}

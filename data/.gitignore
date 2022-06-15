@@ -1,0 +1,10 @@
+/raw/*
+/external/*
+/interim/*
+/processed/*
+contribution_example.csv
+contribution_sample.csv
+!/raw/.gitkeep
+!/external/.gitkeep
+!/interim/.gitkeep
+!/processed/.gitkeep

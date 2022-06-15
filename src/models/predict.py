@@ -5,6 +5,10 @@ import time
 
 import click
 import pandas as pd
+# For pickle
+# TODO: modify as in https://stackoverflow.com/questions/54012769/saving-an-sklearn-functiontransformer-with-the-function-it-wraps
+from src.models.explore_train_model import (  # pylint: disable=unused-import
+    func, inverse_func)
 from src.read_config import get_data_config
 
 
@@ -26,8 +30,8 @@ def predict(input_filepath: str, input_modelpath: str, output_filepath: str) -> 
     (features, ) = get_data_config("explore_train_model", ["features"])
     (date_col, target_col) = get_data_config("common", ["date_col", "target"])
     df = pd.read_csv(input_filepath)
-    with open(input_modelpath, 'rb') as f:
-        model = pickle.load(f)
+    with open(input_modelpath, 'rb') as file_:
+        model = pickle.load(file_)
 
     dates = df[date_col]
     df = (df.loc[:, features["include"]] if isinstance(features["include"], list)

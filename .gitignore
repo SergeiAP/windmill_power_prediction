@@ -75,19 +75,6 @@ target/
 # Jupyter NB Checkpoints
 .ipynb_checkpoints/
 
-# exclude data from source control by default
-/data/
-
-# exclude artifacts - plots
-/reports/figures/exploratory/*
-/reports/figures/importance/*
-
-# exclude artifacts - models
-/models/*
-
-# https://dvc.org/doc/command-reference/metrics
-!/models/metrics.json
-
 # exclude artifacts - dvc
 /dvc_plots
 
@@ -104,5 +91,8 @@ target/
 # Mypy cache
 .mypy_cache/
 
-# Save all .gitkeep
+# Save all .gitkeep and .dvc
 !*.gitkeep
+!*/.gitkeep
+!*.dvc
+!*/.dvc

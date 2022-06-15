@@ -1,0 +1,10 @@
+/lm_model.pkl
+/metadata/*
+/prediction/*
+/*.csv
+
+!/metadata/.gitkeep
+!/prediction/.gitkeep
+
+# https://dvc.org/doc/command-reference/metrics
+!/models/metrics.json
