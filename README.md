@@ -1,8 +1,11 @@
 Windmill power prediction 
 ==============================
 
-Data Science case for windmill power prediction based on weather. Based on Data Challenge of Air Liquide and TotalEnergies companies in 2021. The link of the competition is https://datascience.total.com/fr/challenge/19/details#.
-Project presentation: [(RU)[https://docs.google.com/presentation/d/1_LnCRoTVObppkohVuFIcRWabu_nkG4Dc6QPrGgQGpPQ/edit#slide=id.p1] / EN].
+Data Science case for windmill power prediction based on weather. Based on Data Challenge of Air Liquide and TotalEnergies companies in 2021.
+
+__The link of the competition__: https://datascience.total.com/fr/challenge/19/details#
+
+__Project presentation__: [[RU](https://docs.google.com/presentation/d/1_LnCRoTVObppkohVuFIcRWabu_nkG4Dc6QPrGgQGpPQ/edit#slide=id.p1) / EN]
 
 ![Project description](./.readme/project_description.jpg)
 
