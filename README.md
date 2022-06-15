@@ -7,6 +7,8 @@ __The link of the competition__: https://datascience.total.com/fr/challenge/19/d
 
 __Project presentation__: [[RU](https://docs.google.com/presentation/d/1_LnCRoTVObppkohVuFIcRWabu_nkG4Dc6QPrGgQGpPQ/edit#slide=id.p1) / EN]
 
+__Raw data__: https://drive.google.com/drive/folders/1FtEotBMIuILnc5K01aLj4z1X2GfdkdyN
+
 ![Project description](./.readme/project_description.jpg)
 
 # 1. Project structure
@@ -92,8 +94,12 @@ __Project presentation__: [[RU](https://docs.google.com/presentation/d/1_LnCRoTV
     │
     ├── .github            <- Folder for `githib` services, CI/CD
     │   │                     
-    │   └── workflows
-    │       └── python-codestyle.yml <- CI file for github
+    │   ├── workflows
+    │   │   └── python-codestyle.yml <- CI file for github
+    │   │
+    │   ├── config_s3      <- `S3` config adapted for `CI/CD`
+    │   │
+    │   └── dvc_.yaml      <- `DVC` config adapted for `CI/CD`
     │
     ├── .env.example       <- `.env` example with mandatory variables 
     │
@@ -102,20 +108,23 @@ __Project presentation__: [[RU](https://docs.google.com/presentation/d/1_LnCRoTV
     │                         generated with `conda env export > conda.yml` and reproducable by 
     │                         `conda env create -n windmill_power_prediction -f conda.yml`
     │
+    ├── conda_win.yml      <- As `conda.yml` but for windows-only
+    │
     ├── dvc.lock           <- `DVC` file to track changes in versioned files
     │
     ├── dvc.yaml           <- `DVC` file with DAG pipeline of the project 
     │    
-    └── pyproject.toml     <- toml file with settings for linters etc.
+    ├── pyproject.toml     <- toml file with settings for linters etc.
+    │    
+    └── tox.ini            <- for `flake8` params
 
 # X. TODO
 
-1. Make conda.yml pretier + test it on different workstations
-2. Make service to write predictions into Postgre (on clear PostgreSQL without SQLAlchemy)
-3. Finish GitHub CI/CD
-4. Fully test service in the cloud
-5. Integrate CatBoost into sklearn.pipeline
-6. Create front-end (Grafana/Dash/streamlit)
+1. Make service to write predictions into Postgre (on clear PostgreSQL without SQLAlchemy)
+2. Finish GitHub CI/CD
+3. Fully test service in the cloud
+4. Integrate CatBoost into sklearn.pipeline
+5. Create front-end (Grafana/Dash/streamlit)
 
 # XX. Useful commands
 Useful docker commands:

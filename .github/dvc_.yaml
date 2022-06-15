@@ -1,6 +1,6 @@
 vars:
   - common:
-      root: set PYTHONPATH=%PYTHONPATH%;./
+      root: export PYTHONPATH=$PYTHONPATH:./
       config: src/config.yml
       root_folder: ../
 stages:

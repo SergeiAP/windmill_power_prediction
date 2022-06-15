@@ -138,8 +138,8 @@ stages:
       md5: bfc394140414cbe1a47566d087136644
       size: 77899595
     - path: src/models/explore_train_model.py
-      md5: b94dd63e2c659f6e29fa3fc9214225a2
-      size: 23838
+      md5: f1e08b62cc445ef37dca4502d7a57cf3
+      size: 23883
     params:
       src/config.yml:
         common.date_col: date
@@ -225,12 +225,12 @@ stages:
       md5: 68b329da9893e34099c7d8ad5cb9c940
       size: 2
     - path: models/lm_model.pkl
-      md5: 2ac6e73db306d71bfe499157338a8f1b
+      md5: a58440357df505d2350de081cf4c7201
       size: 35083173
     - path: models/metadata/
-      md5: 2cf7a680fed603c9a77637002ab2a247.dir
-      size: 3751077
-      nfiles: 4
+      md5: 66e180a447244d9630379ccf4ddb1a12.dir
+      size: 3751078
+      nfiles: 5
     - path: models/metrics.json
       md5: 63e6c673aa99fbfec6e076283f594b67
       size: 48
@@ -242,11 +242,11 @@ stages:
       md5: 1938580aa29bd674ba7c95767ec23760
       size: 31047111
     - path: models/lm_model.pkl
-      md5: 2ac6e73db306d71bfe499157338a8f1b
+      md5: a58440357df505d2350de081cf4c7201
       size: 35083173
     - path: src/models/predict.py
-      md5: b367fb6efe7d169fee61ccc4b8ae6665
-      size: 2046
+      md5: 69739b411b37b5cf2cff869ca33cede2
+      size: 2297
     params:
       src/config.yml:
         common.date_col: date
@@ -262,8 +262,8 @@ stages:
         explore_train_model.features.include: all
     outs:
     - path: models/prediction/predictions.csv
-      md5: 3c030a42c87fb4e8d9f1072530b5f56d
-      size: 1817926
+      md5: 765a47a019c50aab195e7b23ccbd124a
+      size: 1818322
   plot_feature_importances:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/visualization/plot_feature_importance.py
       data/processed/data_train.csv reports/figures/importance/
