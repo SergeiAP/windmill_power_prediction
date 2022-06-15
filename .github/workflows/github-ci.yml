@@ -43,7 +43,7 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py') --disable=E0401 --fail-under=8
-      continue-on-error: true
+      continue-on-error: false
     - name: Format with black
       run: |
         black --check .

@@ -1,6 +1,7 @@
 # pylint: disable=missing-module-docstring
 # TODO: change print to logs
 # TODO: split file
+# TODO: add adjusted model names in MLFlow 
 import copy
 import json
 import os
