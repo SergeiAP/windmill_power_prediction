@@ -8,3 +8,4 @@ contribution_sample.csv
 !/external/.gitkeep
 !/interim/.gitkeep
 !/processed/.gitkeep
+/raw

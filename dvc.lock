@@ -5,9 +5,9 @@ stages:
       data/interim/data_train.csv
     deps:
     - path: data/raw/
-      md5: 740993cae74002c2587001a4a5306b07.dir
+      md5: 1eca26e572c0ec143159b1af356268df.dir
       size: 22905874
-      nfiles: 9
+      nfiles: 8
     - path: src/data/merge_data.py
       md5: 1af2e8df629a798657fe221676a79147
       size: 6333
@@ -138,8 +138,8 @@ stages:
       md5: bfc394140414cbe1a47566d087136644
       size: 77899595
     - path: src/models/explore_train_model.py
-      md5: 04f68424e1045d727096a8bd7bc6aecb
-      size: 23814
+      md5: b94dd63e2c659f6e29fa3fc9214225a2
+      size: 23838
     params:
       src/config.yml:
         common.date_col: date
@@ -203,8 +203,8 @@ stages:
               - 20
               - 10
           plot_learning_curve:
-            is_on: true
-            n_jobs: 4
+            is_on: false
+            n_jobs: -1
             scoring: neg_mean_absolute_error
             figsize:
             - 20
@@ -226,38 +226,134 @@ stages:
       size: 2
     - path: models/lm_model.pkl
       md5: 2ac6e73db306d71bfe499157338a8f1b
-      size: 3751077
+      size: 35083173
     - path: models/metadata/
-      md5: b36c2f93c6a7c63bbe9fcc34ce27c182.dir
-      size: 3757230
-      nfiles: 5
+      md5: 2cf7a680fed603c9a77637002ab2a247.dir
+      size: 3751077
+      nfiles: 4
     - path: models/metrics.json
       md5: 63e6c673aa99fbfec6e076283f594b67
       size: 48
   predict:
-    cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/models/predict_model.py data/processed/data_predict.csv
+    cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/models/predict.py data/processed/data_predict.csv
       models/lm_model.pkl models/prediction/predictions.csv
     deps:
     - path: data/processed/data_predict.csv
       md5: 1938580aa29bd674ba7c95767ec23760
       size: 31047111
-    - path: src/models/predict_model.py
-      md5: 5472cb53b5907dff7df2ce572dda8300
-      size: 1788
+    - path: models/lm_model.pkl
+      md5: 2ac6e73db306d71bfe499157338a8f1b
+      size: 35083173
+    - path: src/models/predict.py
+      md5: b367fb6efe7d169fee61ccc4b8ae6665
+      size: 2046
     params:
       src/config.yml:
         common.date_col: date
         common.target: wp
         explore_train_model.features.exclude:
-         - date
-         - wd_cos_d2s1
-         - wd_sin_d2s1
-         - ws_d2s1
-         - wd_sin_d2s3
-         - wd_cos_d2s3
-         - ws_d2s3
+        - date
+        - wd_cos_d2s1
+        - wd_sin_d2s1
+        - ws_d2s1
+        - wd_sin_d2s3
+        - wd_cos_d2s3
+        - ws_d2s3
         explore_train_model.features.include: all
     outs:
     - path: models/prediction/predictions.csv
-      md5: 96f5b7027fba26bf6e8d77729163eb21
-      size: 1815036
+      md5: 3c030a42c87fb4e8d9f1072530b5f56d
+      size: 1817926
+  plot_feature_importances:
+    cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/visualization/plot_feature_importance.py
+      data/processed/data_train.csv reports/figures/importance/
+    deps:
+    - path: data/processed/data_train.csv
+      md5: bfc394140414cbe1a47566d087136644
+      size: 77899595
+    - path: src/visualization/plot_feature_importance.py
+      md5: 90acce78ee5e9d53b561f75ff2efb1a9
+      size: 7604
+    params:
+      src/config.yml:
+        common.seed: 42
+        common.target: wp
+        plot_feature_importance:
+          features:
+            include: all
+            exclude:
+            - date
+          windfarm_col: windfarm
+          get_permutation_importance:
+            is_on: true
+            n_repeats: 10
+            train_test_cfg:
+              test_size: 0.25
+              shuffle: true
+            random_forest_cfg:
+              min_samples_leaf: 10
+          plot_power_prediciton:
+            is_on: true
+            whiskers_len: 10
+          plot_params:
+            set_plot_params: true
+            figsize:
+            - 30
+            - 15
+            fontsize:
+    outs:
+    - path: reports/figures/importance/pfi_perm_feature_importances.png
+      md5: 293fc22e9c0196d2820077bc147e01e6
+      size: 121527
+  plot_exploratory:
+    cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/visualization/plot_exploratory.py
+      data/processed/data_train.csv reports/figures/exploratory/
+    deps:
+    - path: data/processed/data_train.csv
+      md5: bfc394140414cbe1a47566d087136644
+      size: 77899595
+    - path: src/visualization/plot_exploratory.py
+      md5: 353469e66564411f9e9c41f2195c9f7b
+      size: 7923
+    params:
+      src/config.yml:
+        common.target: wp
+        plot_exploratory:
+          features:
+            include:
+            - windfarm
+            - hour
+            - ws
+            - wd_sin
+            - wd_cos
+            - side
+            - ws-wd_cos
+            - ws_frac
+            - ws_log
+            - ws_med24
+            - ws_l3
+            - ws_l12
+            exclude: []
+          set_plot_params:
+            is_on: true
+          plot_corr_matrix:
+            is_on: true
+            cat_col: windfarm
+            figsize:
+            - 30
+            - 15
+            fontsize: 14
+          plot_boxplot:
+            is_on: true
+            is_standardized: true
+          plot_pairplot:
+            is_on: false
+            hue_col: windfarm
+            kind: reg
+            diag_kind: kde
+            alpha: 0.3
+    outs:
+    - path: reports/figures/exploratory/
+      md5: f53cdd6955d59ff0c21433cd996c030a.dir
+      size: 2516269
+      nfiles: 5
