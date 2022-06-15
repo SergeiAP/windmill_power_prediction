@@ -1,7 +1,7 @@
 Windmill power prediction 
 ==============================
 
-Data Science case for windmill power prediction based on weather. Based on Data Challenge of Air Liquide and TotalEnergies companies in 2021.
+Data Science case for windmill power prediction based on weather. Based on Data Challenge of [Air Liquide](https://www.airliquide.com/) and [TotalEnergies](https://totalenergies.com/) companies in 2021.
 
 __The link of the competition__: https://datascience.total.com/fr/challenge/19/details#
 
@@ -108,8 +108,16 @@ __Project presentation__: [[RU](https://docs.google.com/presentation/d/1_LnCRoTV
     │    
     └── pyproject.toml     <- toml file with settings for linters etc.
 
+# X. TODO
 
-# X. Useful commands
+1. Make conda.yml pretier + test it on different workstations
+2. Make service to write predictions into Postgre (on clear PostgreSQL without SQLAlchemy)
+3. Finish GitHub CI/CD
+4. Fully test service in the cloud
+5. Integrate CatBoost into sklearn.pipeline
+6. Create front-end (Grafana/Dash/streamlit)
+
+# XX. Useful commands
 Useful docker commands:
 ```bash
 # create image for mlflow
