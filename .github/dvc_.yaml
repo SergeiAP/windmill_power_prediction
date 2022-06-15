@@ -28,11 +28,7 @@ stages:
     cmd: ${common.root} && python src/data/clip_outliers.py data/interim/data_agg_weather.csv data/interim/data_clipped.csv
     params:
       - ${common.config}:
-<<<<<<< HEAD
         - clip_outliers
-=======
-          - clip_outliers
->>>>>>> b381740889771c79055312e485d23f4e953e2157
     deps:
       - data/interim/data_agg_weather.csv
       - src/data/clip_outliers.py
@@ -54,15 +50,9 @@ stages:
     cmd: ${common.root} && python src/data/split_train_predict.py data/interim/data_featured.csv data/processed/data_train.csv data/processed/data_predict.csv
     params:
       - ${common.config}:
-<<<<<<< HEAD
         - split_train_predict
         - common.target
         - common.date_col
-=======
-          - split_train_predict
-          - common.target
-          - common.date_col
->>>>>>> b381740889771c79055312e485d23f4e953e2157
     deps:
       - data/interim/data_featured.csv
       - src/data/split_train_predict.py
@@ -74,19 +64,11 @@ stages:
     cmd: ${common.root} && python src/visualization/plot_exploratory.py data/processed/data_train.csv reports/figures/exploratory/
     params:
       - ${common.config}:
-<<<<<<< HEAD
         - plot_exploratory
         - common.target
     deps:
       - data/processed/data_train.csv
       - src/visualization/plot_exploratory.py 
-=======
-          - plot_exploratory
-          - common.target
-    deps:
-      - data/processed/data_train.csv
-      - src/visualization/plot_exploratory.py
->>>>>>> b381740889771c79055312e485d23f4e953e2157
     outs:
       - reports/figures/exploratory/:
           persist: True

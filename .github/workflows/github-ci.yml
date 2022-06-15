@@ -2,15 +2,9 @@ name: Codestyle and integrity
 
 on:
   push:
-<<<<<<< HEAD
-    branches: [test_github_wf]
-  pull_request:
-    branches: [test_github_wf]
-=======
     branches: [master]
   pull_request:
     branches: [master]
->>>>>>> b381740889771c79055312e485d23f4e953e2157
 
 env:
   NODE_TLS_REJECT_UNAUTHORIZED: 0
