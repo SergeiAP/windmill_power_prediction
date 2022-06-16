@@ -1,6 +1,6 @@
 vars:
   - common:
-      root: set PYTHONPATH=%PYTHONPATH%;./
+      root: export PYTHONPATH=$PYTHONPATH:./
       config: src/config.yml
       root_folder: ../
 stages:
@@ -28,7 +28,7 @@ stages:
     cmd: ${common.root} && python src/data/clip_outliers.py data/interim/data_agg_weather.csv data/interim/data_clipped.csv
     params:
       - ${common.config}:
-          - clip_outliers
+        - clip_outliers
     deps:
       - data/interim/data_agg_weather.csv
       - src/data/clip_outliers.py
@@ -50,9 +50,9 @@ stages:
     cmd: ${common.root} && python src/data/split_train_predict.py data/interim/data_featured.csv data/processed/data_train.csv data/processed/data_predict.csv
     params:
       - ${common.config}:
-          - split_train_predict
-          - common.target
-          - common.date_col
+        - split_train_predict
+        - common.target
+        - common.date_col
     deps:
       - data/interim/data_featured.csv
       - src/data/split_train_predict.py
@@ -64,11 +64,11 @@ stages:
     cmd: ${common.root} && python src/visualization/plot_exploratory.py data/processed/data_train.csv reports/figures/exploratory/
     params:
       - ${common.config}:
-          - plot_exploratory
-          - common.target
+        - plot_exploratory
+        - common.target
     deps:
       - data/processed/data_train.csv
-      - src/visualization/plot_exploratory.py
+      - src/visualization/plot_exploratory.py 
     outs:
       - reports/figures/exploratory/:
           persist: True
@@ -77,12 +77,12 @@ stages:
     cmd: ${common.root} && python src/visualization/plot_feature_importance.py data/processed/data_train.csv reports/figures/importance/
     params:
       - ${common.config}:
-          - plot_feature_importance
-          - common.target
-          - common.seed
+        - plot_feature_importance
+        - common.target
+        - common.seed
     deps:
       - data/processed/data_train.csv
-      - src/visualization/plot_feature_importance.py
+      - src/visualization/plot_feature_importance.py 
     plots:
       - reports/figures/importance/pfi_perm_feature_importances.png:
           cache: True
@@ -90,10 +90,10 @@ stages:
     cmd: ${common.root} && python src/models/explore_train_model.py data/processed/data_train.csv models/metadata/ models/
     params:
       - ${common.config}:
-          - explore_train_model
-          - common.target
-          - common.date_col
-          - common.seed
+        - explore_train_model
+        - common.target
+        - common.date_col
+        - common.seed
     deps:
       - data/processed/data_train.csv
       - src/models/explore_train_model.py
@@ -120,10 +120,10 @@ stages:
     cmd: ${common.root} && python src/models/predict.py data/processed/data_predict.csv models/lm_model.pkl models/prediction/predictions.csv
     params:
       - ${common.config}:
-          - explore_train_model.features.include
-          - explore_train_model.features.exclude
-          - common.target
-          - common.date_col
+        - explore_train_model.features.include
+        - explore_train_model.features.exclude
+        - common.target
+        - common.date_col
     deps:
       - data/processed/data_predict.csv
       - src/models/predict.py

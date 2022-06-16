@@ -8,73 +8,124 @@ on:
 
 env:
   NODE_TLS_REJECT_UNAUTHORIZED: 0
+  env_file: conda.yml  # also required to set in "Cache conda" in key
 
 jobs:
   build:
-    runs-on: [self-hosted, Windows]
+    runs-on: [self-hosted, docker, ubuntu]
     strategy:
       # For debbug purposes
       fail-fast: true
       matrix:
+        conda-version: ["py39_4.12.0"]
         python-version: ["3.10.4"]
+        env-name: ["windmill_power_prediction"]
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Cache pip
+    - name: Cache conda
       uses: actions/cache@v2
+      env:
+        # Increase this value to reset cache if conda.yml has not changed
+        CACHE_NUMBER: 0
       with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-    - name: Install dependencies
+        path: ~/conda_pkgs_dir
+        key:
+          ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+          hashFiles('conda.yml') }}  # change conda.yml if required
+    - name: Set up conda ${{ matrix.conda-version }}
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniconda-version: ${{ matrix.conda-version }}
+        python-version: ${{ matrix.python-version }}
+        auto-activate-base: true
+        activate-environment: ${{ matrix.env-name }}
+        channels: conda-forge,bioconda,defaults
+        condarc-file: .condarc
+        use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+    - name: Finish env installing 
       run: |
-        # because it is used local github-runner there are some problems to activate
-        # new env. Therefore it is easier to activate it's primary env.
-        # TODO: change such behaviour
-        conda deactivate
-        conda activate windmill_power_prediction
-        python --version
-        # python -m pip install -- upgrade pip
-        # pip install pylint black
+        eval "$(conda shell.bash hook)" && conda activate ${{ matrix.env-name }}
+        conda env list
+        conda install pylint=2.13.9 black=22.3.0 mypy=0.961 flake8=4.0.1 -v
     - name: Analysing the code with pylint
       run: |
-        pylint $(git ls-files '*.py') --disable=E0401 --fail-under=8
+        eval "$(conda shell.bash hook)" && conda activate ${{ matrix.env-name }}
+        conda env list
+        pylint $(find ./src -type f -name *.py) --disable=E0401 --fail-under=8
       continue-on-error: false
     - name: Format with black
       run: |
-        black --check .
+        eval "$(conda shell.bash hook)" && conda activate ${{ matrix.env-name }}
+        conda env list
+        black --check ./src
       continue-on-error: true
     - name: Check type hints by mypy
       run: |
-        conda deactivate
-        conda activate windmill_power_prediction
-        mypy --ignore-missing-imports .gitignore
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --ignore E999
+        eval "$(conda shell.bash hook)" && conda activate ${{ matrix.env-name }}
+        conda env list
+        mypy ./src --ignore-missing-imports
+      continue-on-error: true
+    - name: Check advices from flake
+      run: |
+        eval "$(conda shell.bash hook)" && conda activate ${{ matrix.env-name }}
+        conda env list
+        flake8 ./src --count --select=E9,F63,F7,F82 --show-source --statistics --ignore E999
 
   integrity:
-    runs-on: [self-hosted, Windows]
+    runs-on: [self-hosted, docker, ubuntu]
     needs: build
     strategy:
       # For debbug purposes
       fail-fast: true
       matrix:
+        conda-version: ["py39_4.12.0"]
         python-version: ["3.10.4"]
+        env-name: ["windmill_power_prediction"]
     steps:
-    - uses: actions/checkout@v3  
-    - name: Set dvc.yaml for CI
-      run: copy ./.github/dvc_.yaml ./dvc.yaml
+    - uses: actions/checkout@v3
+    - name: Cache conda
+      uses: actions/cache@v2
+      env:
+        # Increase this value to reset cache if conda.yml has not changed
+        CACHE_NUMBER: 0
+      with:
+        path: ~/conda_pkgs_dir
+        key:
+          ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+          hashFiles('conda.yml') }}  # change conda.yml if required
+    - name: Set up conda ${{ matrix.conda-version }}
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniconda-version: ${{ matrix.conda-version }}
+        python-version: ${{ matrix.python-version }}
+        auto-activate-base: true
+        activate-environment: ${{ matrix.env-name }}
+        channels: conda-forge,bioconda,defaults
+        condarc-file: .condarc
+        use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+    - name: Finish env installing 
+      run: |
+        eval "$(conda shell.bash hook)" && conda activate ${{ matrix.env-name }}
+        conda env list
+        pip config set global.trusted-host "pypi.org files.pythonhosted.org pypi.python.org raw.githubusercontent.com github.com"
+        conda install git
+        conda env update --file $env_file --prune -v
+    - name: Set dvc for CI
+      run: |
+        cp ./.github/dvc_.yaml ./dvc.yaml
+        cp  ./.github/config_s3 ./.dvc/config
     - name: Run dvc workflow
       run: |
-        conda deactivate
-        conda activate windmill_power_prediction
-        dvc pull
+        eval "$(conda shell.bash hook)" && conda activate ${{ matrix.env-name }}
+        conda env list
+        git init
+        dvc pull -f
+        chmod 777 -R ./
         dvc repro
       env:
         MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
         MLFLOW_TRACKING_INSECURE_TLS: ${{ secrets.MLFLOW_TRACKING_INSECURE_TLS }}
         MLFLOW_S3_ENDPOINT_URL: ${{ secrets.MLFLOW_S3_ENDPOINT_URL }}
         MLFLOW_EXPERIMENT_NAME: ${{ secrets.MLFLOW_EXPERIMENT_NAME }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

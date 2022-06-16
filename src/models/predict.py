@@ -11,6 +11,11 @@ from src.models.explore_train_model import (  # pylint: disable=unused-import
     func, inverse_func)
 from src.read_config import get_data_config
 
+# For pickle
+# TODO: modify as in https://stackoverflow.com/questions/54012769/saving-an-sklearn-functiontransformer-with-the-function-it-wraps
+from src.models.explore_train_model import ( # pylint: disable=unused-import
+    func, inverse_func)
+
 
 @click.command()
 @click.argument("input_filepath", type=click.Path(exists=True))
