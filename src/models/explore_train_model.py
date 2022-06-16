@@ -1,6 +1,7 @@
 # pylint: disable=missing-module-docstring
 # TODO: change print to logs
 # TODO: split file
+# TODO: add adjusted model names in MLFlow 
 import copy
 import json
 import os
@@ -492,6 +493,7 @@ def run_tuning_eval_train(input_filepath: str,
         
         if params_search_cfg["is_on"]:
             print("Params search starting")
+        
             cv_results = param_search(data, df_target, model,
                                     params_search_cfg["n_jobs"],
                                     params_search_cfg["grid_params"],
@@ -512,6 +514,7 @@ def run_tuning_eval_train(input_filepath: str,
         
         if plot_learning_curve_cfg["is_on"]:
             print("Learning curve starting")
+            
             lc_plot, df_lc = plot_learning_curve(data, df_target, model,
                                                 best_params,
                                                 plot_learning_curve_cfg,

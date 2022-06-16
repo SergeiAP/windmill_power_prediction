@@ -1,0 +1,7 @@
+ssl_verify: false
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+channel_priority: strict
+env_prompt: ({name})
