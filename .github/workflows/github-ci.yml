@@ -119,7 +119,7 @@ jobs:
         eval "$(conda shell.bash hook)" && conda activate ${{ matrix.env-name }}
         conda env list
         git init
-        dvc pull
+        dvc pull -f
         chmod 777 -R ./
         dvc repro
       env:

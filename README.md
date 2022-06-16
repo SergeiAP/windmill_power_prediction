@@ -11,6 +11,9 @@ __Raw data__: https://drive.google.com/drive/folders/1FtEotBMIuILnc5K01aLj4z1X2G
 
 ![Project description](./.readme/project_description.jpg)
 
+__NOTE:__  
+Because of local issues you could find ~`SSLVerify=False` syntax. It is also one of the reason to use `conda` instead of `poetry`. It could be omitted if you do not have problems with SSL.
+
 # 1. Project structure
 
     ├── LICENSE
@@ -120,11 +123,12 @@ __Raw data__: https://drive.google.com/drive/folders/1FtEotBMIuILnc5K01aLj4z1X2G
 
 # X. TODO
 
-1. Make service to write predictions into Postgre (on clear PostgreSQL without SQLAlchemy)
-2. Finish GitHub CI/CD
-3. Fully test service in the cloud
-4. Integrate CatBoost into sklearn.pipeline
-5. Create front-end (Grafana/Dash/streamlit)
+1. Make workflow shorted (the problem is in long conflict resolution in conda)
+2. Make service to write predictions into Postgre (on clear PostgreSQL without SQLAlchemy)
+3. Finish GitHub CI/CD
+4. Fully test service in the cloud
+5. Integrate CatBoost into sklearn.pipeline
+6. Create front-end (Grafana/Dash/streamlit)
 
 # XX. Useful commands
 Useful docker commands:
