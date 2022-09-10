@@ -5,7 +5,7 @@ Data Science case for windmill power prediction based on weather. Based on Data 
 
 __The link of the competition__: https://datascience.total.com/fr/challenge/19/details#
 
-__Project presentation__: [[RU](https://docs.google.com/presentation/d/1_LnCRoTVObppkohVuFIcRWabu_nkG4Dc6QPrGgQGpPQ/edit#slide=id.p1) / EN]
+__Project presentation__: [[RU](https://docs.google.com/presentation/d/1_LnCRoTVObppkohVuFIcRWabu_nkG4Dc6QPrGgQGpPQ/edit?usp=sharing) / [EN](https://docs.google.com/presentation/d/1L5D4HqUiLyIuLWJv-6U4-XkU2T1NHDX-7N43LSzwwHU/edit?usp=sharing)]
 
 __Raw data__: https://drive.google.com/drive/folders/1FtEotBMIuILnc5K01aLj4z1X2GfdkdyN
 
