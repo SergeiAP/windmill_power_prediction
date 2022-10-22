@@ -1,10 +1,17 @@
 [core]
     remote = remote
     autostage = true
-['remote "remote"']
+['remote "local"']
     url = s3://wind-power-prediciton/dvc
     endpointurl = http://172.27.0.4:5441 # http://172.0.0.1:5441
     access_key_id = minioadmin
     secret_access_key = minioadmin
+    ssl_verify = false
+    use_ssl = false
+['remote "remote"']  # to acce remote S3
+    url = s3://windmill-power-prediction/dvc
+    endpointurl = https://storage.yandexcloud.net
+    access_key_id = YCAJEp2WhMFCdM72nZR8UmJLf
+    secret_access_key = YCN7dymNw9Z9r2Kd4VXOKU1c5NPvk-gTb1nm90u3
     ssl_verify = false
     use_ssl = false
