@@ -143,6 +143,8 @@ docker build -f Docker/model_service/Dockerfile -t wpp_model_service .
 docker-compose up -d --build
 # if it is required to build and run specific service
 docker-compose up -d --build app
+# if you set up data science env for experimetns (if you use remote S3, then use "db pgadmin mlflow" only)
+docker-compose up -d --build minio nginx db pgadmin mlflow 
 # to replace files in docker without creating new image and building container
 docker cp ./inference.py wpp_model_service:/code/app/inference.py
 ```

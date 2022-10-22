@@ -3,6 +3,7 @@ version: '3.8'
 
 services:
 
+  # Use minio and nginx if use local S3 - minio
   minio:
     container_name: wpp_minio
     hostname: minio
@@ -12,18 +13,24 @@ services:
       - "5441"
       - "5442"
     networks:
-      - s3      
+      - s3
     environment:
-      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}        
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
       MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5441/minio/health/live"]
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:5441/minio/health/live"
+        ]
       interval: 30s
       timeout: 20s
       retries: 3
     volumes:
       - ./Docker/minio/:/data
-      
+
   nginx:
     image: nginx:1.19.2-alpine
     container_name: wpp_nginx
@@ -37,7 +44,7 @@ services:
       - s3
     depends_on:
       - minio
-      
+
   db:
     container_name: wpp_postgres
     image: postgres
@@ -48,12 +55,12 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       PGDATA: /data/postgres
     volumes:
-       - postgres:/data/postgres
+      - postgres:/data/postgres
     ports:
       - "5438:5432"
     networks:
       - postgres
-      
+
   pgadmin:
     # to connect to postgres use ip from: `docker ps`, `docker inspect {POSTGRES_CONTAINER ID}` -> IPAddress
     container_name: wpp_pgadmin
@@ -63,7 +70,7 @@ services:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     volumes:
-       - ./Docker/pgadmin/:/var/lib/pgadmin
+      - ./Docker/pgadmin/:/var/lib/pgadmin
     ports:
       - "5439:80"
     networks:
@@ -82,11 +89,11 @@ services:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       # localhost is not working because it is going to use internal network 
-      - MLFLOW_S3_ENDPOINT_URL=http://nginx:5441
+      - MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL} # With minio - http://nginx:5441, with yandex - 
     command: >
       mlflow server 
         --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
-        --default-artifact-root s3://${AWS_S3_BUCKET}/ 
+        --default-artifact-root ${AWS_S3_BUCKET}
         --host 0.0.0.0
 
   app:
@@ -100,8 +107,8 @@ services:
       - s3
     environment:
       # localhost is not working because it is going to use internal network 
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
-      - MLFLOW_S3_ENDPOINT_URL=http://nginx:5441
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+      - MLFLOW_S3_ENDPOINT_URL=http://storage.yandexcloud.net # With minio - http://nginx:5441, with yandex - 
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 
