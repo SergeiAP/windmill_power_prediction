@@ -9,22 +9,22 @@ stages:
       size: 22906530
       nfiles: 17
     - path: src/data/merge_data.py
-      md5: 1af2e8df629a798657fe221676a79147
-      size: 6333
+      md5: 37569f62e1d63fa17301021bfeaade09
+      size: 6621
     outs:
     - path: data/interim/data_test_labels.csv
       md5: ef24b964f024baad818ec6fd7d3978cd
       size: 156246
     - path: data/interim/data_train.csv
-      md5: 0386eb3f967332072dba136b08062867
-      size: 32784950
+      md5: 3fb9da2c50762cf6b0fb1acab070586f
+      size: 32426305
   aggregate_weather:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/data/aggregate_weather.py data/interim/data_train.csv
       data/interim/data_agg_weather.csv
     deps:
     - path: data/interim/data_train.csv
-      md5: 0386eb3f967332072dba136b08062867
-      size: 32784950
+      md5: 3fb9da2c50762cf6b0fb1acab070586f
+      size: 32426305
     - path: src/data/aggregate_weather.py
       md5: 9988031f1f3780ca91970afdeb0add7f
       size: 4691
@@ -36,15 +36,15 @@ stages:
       size: 12005
     outs:
     - path: data/interim/data_agg_weather.csv
-      md5: a02ba664e8205ba7bdba73cf2b2f6bcd
-      size: 8439585
+      md5: ff72e7cebb5aac085bb4d7944fa40fcc
+      size: 8339620
   clip_data:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/data/clip_outliers.py data/interim/data_agg_weather.csv
       data/interim/data_clipped.csv
     deps:
     - path: data/interim/data_agg_weather.csv
-      md5: a02ba664e8205ba7bdba73cf2b2f6bcd
-      size: 8439585
+      md5: ff72e7cebb5aac085bb4d7944fa40fcc
+      size: 8339620
     - path: src/data/clip_outliers.py
       md5: 3ab35a574187b84d322a506212a0cb9a
       size: 4457
@@ -73,15 +73,15 @@ stages:
             - windfarm
     outs:
     - path: data/interim/data_clipped.csv
-      md5: f11b0f834795e6307eca9caf13ad10f1
-      size: 8523534
+      md5: 5893538f6ff9024461b67d57f31336c1
+      size: 8423569
   create_features:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/features/create_features.py
       data/interim/data_clipped.csv data/interim/data_featured.csv
     deps:
     - path: data/interim/data_clipped.csv
-      md5: f11b0f834795e6307eca9caf13ad10f1
-      size: 8523534
+      md5: 5893538f6ff9024461b67d57f31336c1
+      size: 8423569
     - path: src/features/create_features.py
       md5: 28606524a00146c780e69af449c1db0b
       size: 10682
@@ -96,15 +96,15 @@ stages:
       size: 18186
     outs:
     - path: data/interim/data_featured.csv
-      md5: b6263f21adc8009dbae47e6b6ae9506c
-      size: 111721549
+      md5: f8e495204f9da858cd16000bb27d79d1
+      size: 111699321
   split_train_predict:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/data/split_train_predict.py
       data/interim/data_featured.csv data/processed/data_train.csv data/processed/data_predict.csv
     deps:
     - path: data/interim/data_featured.csv
-      md5: b6263f21adc8009dbae47e6b6ae9506c
-      size: 111721549
+      md5: f8e495204f9da858cd16000bb27d79d1
+      size: 111699321
     - path: src/data/split_train_predict.py
       md5: 220947110cce5d1b4fcd94b6fb4e3046
       size: 2150
@@ -125,18 +125,18 @@ stages:
             is_na: true
     outs:
     - path: data/processed/data_predict.csv
-      md5: 1938580aa29bd674ba7c95767ec23760
-      size: 31047111
+      md5: 74db2929c76e5b065dbbb3ccca9de60c
+      size: 31043200
     - path: data/processed/data_train.csv
-      md5: bfc394140414cbe1a47566d087136644
-      size: 77899595
+      md5: dd29dec2092c6d93ccfec84534b92640
+      size: 77883457
   explore_train_model:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/models/explore_train_model.py
       data/processed/data_train.csv models/metadata/ models/
     deps:
     - path: data/processed/data_train.csv
-      md5: bfc394140414cbe1a47566d087136644
-      size: 77899595
+      md5: dd29dec2092c6d93ccfec84534b92640
+      size: 77883457
     - path: src/models/explore_train_model.py
       md5: f1e08b62cc445ef37dca4502d7a57cf3
       size: 23883
@@ -225,11 +225,11 @@ stages:
       md5: 68b329da9893e34099c7d8ad5cb9c940
       size: 2
     - path: models/lm_model.pkl
-      md5: 2ac6e73db306d71bfe499157338a8f1b
-      size: 35083173
+      md5: a73d32464781fd2933b02fd169702bfe
+      size: 35060005
     - path: models/metadata/
-      md5: 8b44c0c2e8e12ec3966d27f9877d1cd6.dir
-      size: 841
+      md5: 0589a857fda8cd2051979c3f8964b0c0.dir
+      size: 842
       nfiles: 2
     - path: models/metrics.json
       md5: 63e6c673aa99fbfec6e076283f594b67
@@ -239,11 +239,11 @@ stages:
       models/lm_model.pkl models/prediction/predictions.csv
     deps:
     - path: data/processed/data_predict.csv
-      md5: 1938580aa29bd674ba7c95767ec23760
-      size: 31047111
+      md5: 74db2929c76e5b065dbbb3ccca9de60c
+      size: 31043200
     - path: models/lm_model.pkl
-      md5: 2ac6e73db306d71bfe499157338a8f1b
-      size: 35083173
+      md5: a73d32464781fd2933b02fd169702bfe
+      size: 35060005
     - path: src/models/predict.py
       md5: 69739b411b37b5cf2cff869ca33cede2
       size: 2297
@@ -262,15 +262,15 @@ stages:
         explore_train_model.features.include: all
     outs:
     - path: models/prediction/predictions.csv
-      md5: 3c030a42c87fb4e8d9f1072530b5f56d
-      size: 1817926
+      md5: 851e930f3635cc6f0acfdccd6c1fa680
+      size: 1818259
   plot_feature_importances:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/visualization/plot_feature_importance.py
       data/processed/data_train.csv reports/figures/importance/
     deps:
     - path: data/processed/data_train.csv
-      md5: bfc394140414cbe1a47566d087136644
-      size: 77899595
+      md5: dd29dec2092c6d93ccfec84534b92640
+      size: 77883457
     - path: src/visualization/plot_feature_importance.py
       md5: 90acce78ee5e9d53b561f75ff2efb1a9
       size: 7604
@@ -303,15 +303,15 @@ stages:
             fontsize:
     outs:
     - path: reports/figures/importance/pfi_perm_feature_importances.png
-      md5: 293fc22e9c0196d2820077bc147e01e6
-      size: 121527
+      md5: 54d0a34ffc0dac0bb43990a2c3a2a74e
+      size: 120851
   plot_exploratory:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/visualization/plot_exploratory.py
       data/processed/data_train.csv reports/figures/exploratory/
     deps:
     - path: data/processed/data_train.csv
-      md5: bfc394140414cbe1a47566d087136644
-      size: 77899595
+      md5: dd29dec2092c6d93ccfec84534b92640
+      size: 77883457
     - path: src/visualization/plot_exploratory.py
       md5: 353469e66564411f9e9c41f2195c9f7b
       size: 7923
@@ -354,6 +354,6 @@ stages:
             alpha: 0.3
     outs:
     - path: reports/figures/exploratory/
-      md5: d09de0bcee3c44f4d2036adbb1bab2ea.dir
-      size: 915100
+      md5: 442c094d39bafea3313e7642ecf9cc5c.dir
+      size: 915426
       nfiles: 4

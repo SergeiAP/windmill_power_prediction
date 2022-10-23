@@ -20,6 +20,15 @@ DATA_PATHS = {
 LAST_TEST_DATE = "2012-06-25 00:00:00"
 # First date for train dataset with all 4 weather predictions
 FIRST_TRAIN_DATE = "2009-07-02 13:00:00"
+# Data types
+DATA_TYPES = {
+    "hors": "int16",
+    "u": "float16",
+    "v": "float16",
+    "ws": "float16",
+    "wd": "float16",
+    "wp": "float16",
+}
 
 
 class DataMerger:
@@ -170,6 +179,8 @@ def run_merging_data(input_folderpath: str, output_filepaths: list[str]) -> None
     df_test, df_train = DataMerger(
         filter_date=(FIRST_TRAIN_DATE, LAST_TEST_DATE)
     ).merge_data(data_paths)
+    
+    df_train = df_train.astype(DATA_TYPES)  # type: ignore
     df_test.to_csv(output_filepaths[0])
     df_train.to_csv(output_filepaths[1])
 
