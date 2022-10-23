@@ -1,12 +1,20 @@
 vars:
   - merge_data:
-      args: "data/raw/ data/interim/data_test_labels.csv data/interim/data_train.csv"
+      args: "data/raw/ data/interim/data_test_labels.csv"
+      out: "data/interim/data_train.csv"
   - common:
       root: set PYTHONPATH=%PYTHONPATH%;./
       config: src/config.yml
+  - explore_train_model:
+      args: "data/processed/data_train.csv models/metadata/ models/"
+  - predict:
+      args: "data/processed/data_predict.csv models/lm_model.pkl models/prediction/predictions.csv"
+  - split_train_predict:
+      args: "data/interim/data_featured.csv data/processed/data_train.csv"
+      out: "data/processed/data_predict.csv"
 stages:
   merge_data:
-    cmd: python src/data/merge_data.py ${merge_data.args}
+    cmd: python src/data/merge_data.py ${merge_data.args} ${merge_data.out}
     deps:
       - data/raw/
       - src/data/merge_data.py
@@ -48,7 +56,7 @@ stages:
       - data/interim/data_featured.csv:
           cache: false
   split_train_predict:
-    cmd: ${common.root} && python src/data/split_train_predict.py data/interim/data_featured.csv data/processed/data_train.csv data/processed/data_predict.csv
+    cmd: ${common.root} && python src/data/split_train_predict.py ${split_train_predict.args} ${split_train_predict.out}
     params:
       - ${common.config}:
         - split_train_predict
@@ -88,7 +96,7 @@ stages:
       - reports/figures/importance/pfi_perm_feature_importances.png:
           cache: True
   explore_train_model:
-    cmd: ${common.root} && python src/models/explore_train_model.py data/processed/data_train.csv models/metadata/ models/
+    cmd: ${common.root} && python src/models/explore_train_model.py ${explore_train_model.args}
     params:
       - ${common.config}:
         - explore_train_model
@@ -118,7 +126,7 @@ stages:
           y: train_mean
           title: "Learning train curve MAE"
   predict:
-    cmd: ${common.root} && python src/models/predict.py data/processed/data_predict.csv models/lm_model.pkl models/prediction/predictions.csv
+    cmd: ${common.root} && python src/models/predict.py ${predict.args}
     params:
       - ${common.config}:
         - explore_train_model.features.include
