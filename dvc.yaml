@@ -1,10 +1,12 @@
 vars:
+  - merge_data:
+      args: "data/raw/ data/interim/data_test_labels.csv data/interim/data_train.csv"
   - common:
       root: set PYTHONPATH=%PYTHONPATH%;./
       config: src/config.yml
 stages:
   merge_data:
-    cmd: python src/data/merge_data.py data/raw/ data/interim/data_test_labels.csv data/interim/data_train.csv
+    cmd: python src/data/merge_data.py ${merge_data.args}
     deps:
       - data/raw/
       - src/data/merge_data.py

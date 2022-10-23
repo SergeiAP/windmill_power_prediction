@@ -5,6 +5,7 @@ from typing import Optional
 import click
 import pandas as pd
 
+# TODO: put in config
 DATA_PATHS = {
     "wp1": "./wp1.csv",
     "wp2": "./wp2.csv",
