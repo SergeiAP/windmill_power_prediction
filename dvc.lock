@@ -1,16 +1,37 @@
 schema: '2.0'
 stages:
   merge_data:
-    cmd: python src/data/merge_data.py data/raw/ data/interim/data_test_labels.csv
-      data/interim/data_train.csv
+    cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/data/merge_data.py data/raw/
+      data/interim/data_test_labels.csv data/interim/data_train.csv
     deps:
     - path: data/raw/
       md5: 23f0d9f2eeb44cce1b6fe785bc00f705.dir
       size: 22906530
       nfiles: 17
     - path: src/data/merge_data.py
-      md5: 37569f62e1d63fa17301021bfeaade09
-      size: 6621
+      md5: 4bdaea231e42f0a996bdf8f0cc819d4e
+      size: 6225
+    params:
+      src/config.yml:
+        merge_data:
+          data_paths:
+            wp1: ./wp1.csv
+            wp2: ./wp2.csv
+            wp3: ./wp3.csv
+            wp4: ./wp4.csv
+            wp5: ./wp5.csv
+            wp6: ./wp6.csv
+            train: ./train.csv
+            test: ./test.csv
+          data_types:
+            hors: int16
+            u: float16
+            v: float16
+            ws: float16
+            wd: float16
+            wp: float16
+          first_train_date: '2009-07-02 13:00:00'
+          last_test_date: '2012-06-25 00:00:00'
     outs:
     - path: data/interim/data_test_labels.csv
       md5: ef24b964f024baad818ec6fd7d3978cd

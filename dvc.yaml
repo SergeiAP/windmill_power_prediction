@@ -14,7 +14,10 @@ vars:
       out: "data/processed/data_predict.csv"
 stages:
   merge_data:
-    cmd: python src/data/merge_data.py ${merge_data.args} ${merge_data.out}
+    cmd: ${common.root} && python src/data/merge_data.py ${merge_data.args} ${merge_data.out}
+    params:
+      - ${common.config}:
+        - merge_data
     deps:
       - data/raw/
       - src/data/merge_data.py

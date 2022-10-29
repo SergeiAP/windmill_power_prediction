@@ -4,31 +4,7 @@ from typing import Optional
 
 import click
 import pandas as pd
-
-# TODO: put in config
-DATA_PATHS = {
-    "wp1": "./wp1.csv",
-    "wp2": "./wp2.csv",
-    "wp3": "./wp3.csv",
-    "wp4": "./wp4.csv",
-    "wp5": "./wp5.csv",
-    "wp6": "./wp6.csv",
-    "train": "./train.csv",
-    "test": "./test.csv",
-}
-# Last date for test dataset
-LAST_TEST_DATE = "2012-06-25 00:00:00"
-# First date for train dataset with all 4 weather predictions
-FIRST_TRAIN_DATE = "2009-07-02 13:00:00"
-# Data types
-DATA_TYPES = {
-    "hors": "int16",
-    "u": "float16",
-    "v": "float16",
-    "ws": "float16",
-    "wd": "float16",
-    "wp": "float16",
-}
+from src.read_config import get_data_config
 
 
 class DataMerger:
@@ -171,16 +147,19 @@ def run_merging_data(input_folderpath: str, output_filepaths: list[str]) -> None
         input_filepath (str): path to the folder with data in `DATA_PATHS`
         output_filepaths (str): paths to save train and test data
     """
+    (data_paths, data_types, first_train_date, last_test_date) = get_data_config(
+        "merge_data",
+        ["data_paths", "data_types", "first_train_date", "last_test_date"])
     
     data_paths = {
         filename: Path(Path(".") / input_folderpath) / path 
-        for filename, path in DATA_PATHS.items() # type: ignore
+        for filename, path in data_paths.items() # type: ignore
     }  # type: ignore
     df_test, df_train = DataMerger(
-        filter_date=(FIRST_TRAIN_DATE, LAST_TEST_DATE)
+        filter_date=(first_train_date, last_test_date)
     ).merge_data(data_paths)
     
-    df_train = df_train.astype(DATA_TYPES)  # type: ignore
+    df_train = df_train.astype(data_types)  # type: ignore
     df_test.to_csv(output_filepaths[0])
     df_train.to_csv(output_filepaths[1])
 

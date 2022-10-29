@@ -2,7 +2,7 @@
 import great_expectations as ge
 import pandas as pd
 from click.testing import CliRunner
-from src.data.merge_data import run_merging_data, DATA_TYPES
+from src.data.merge_data import run_merging_data
 from src.read_config import get_data_config
 
 # Initialize runner
@@ -22,7 +22,8 @@ def test_data_output():
     (out,) = get_data_config("vars", {"merge_data": ["out"]},
                              path = "./dvc.yaml",
                              is_convert_to_dict = True)
-    df_ge = ge.from_pandas(pd.read_csv(out).astype(DATA_TYPES))  # type: ignore
+    (data_types,) = get_data_config("merge_data", ["data_types"])
+    df_ge = ge.from_pandas(pd.read_csv(out).astype(data_types))  # type: ignore
     
     expected_columns = ["date", "hors", "u", "v", "ws", "wd", "wp", "windfarm"]
     # Some could be null for some rows - will be splitted later
@@ -51,7 +52,9 @@ def test_data_output():
     check_data_output_types(df_ge, columns_types, date_format)
     # Check values, wp is normalized
     assert (df_ge
-            .expect_column_values_to_be_between(column="wp", min_value = 0, max_value = 1)
+            .expect_column_values_to_be_between(column="wp",
+                                                min_value = 0,
+                                                max_value = 1)
             .success is True)
     
 
