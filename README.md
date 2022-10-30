@@ -133,10 +133,16 @@ Because of local issues you could find ~`SSLVerify=False` syntax. It is also one
 6. Create front-end (Grafana/Dash/streamlit)
 
 # XX. Useful commands
+Useful commands for the servies:
+```bash
+# To fill database by data from ./data/interim/data_agg_weather.csv (before run `dvc repro` to create such file)
+cd ./Docker/postgres/ && make init_insert_db
+```
+
 Useful docker commands:
 ```bash
 # create image for mlflow
-docker build -f Docker/mlflow_image/Dockerfile -t wpp_mlflow_server .
+docker build -f Docker/mlflow/Dockerfile -t wpp_mlflow_server .
 # create image for API service
 docker build -f Docker/model_service/Dockerfile -t wpp_model_service .
 # general command to build and run all docker services in `docker-compose.yml`

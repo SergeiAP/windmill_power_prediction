@@ -46,8 +46,8 @@ services:
       - minio
 
   db:
+    build: ./Docker/postgres/
     container_name: wpp_postgres
-    image: postgres
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -59,10 +59,11 @@ services:
     ports:
       - "5438:5432"
     networks:
-      - postgres
+      postgres:
+        ipv4_address: 172.20.128.4  # use it to connect to db in pgadmin
 
   pgadmin:
-    # to connect to postgres use ip from: `docker ps`, `docker inspect {POSTGRES_CONTAINER ID}` -> IPAddress
+    # [depriocated] to connect to postgres use ip from: `docker ps`, `docker inspect {POSTGRES_CONTAINER ID}` -> IPAddress
     container_name: wpp_pgadmin
     image: dpage/pgadmin4
     restart: always
@@ -74,17 +75,20 @@ services:
     ports:
       - "5439:80"
     networks:
-      - postgres
+      postgres:
+        ipv4_address: 172.20.128.2
 
   mlflow:
+    build: ./Docker/mlflow/
     restart: always
     image: wpp_mlflow_server
     container_name: wpp_mlflow_server
     ports:
       - "5440:5000"
     networks:
-      - postgres
-      - s3
+      postgres:
+        ipv4_address: 172.20.128.3
+      s3:
     environment:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
@@ -115,6 +119,9 @@ services:
 networks:
   postgres:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.128.0/28
   s3:
     driver: bridge
 
