@@ -45,9 +45,9 @@ services:
     depends_on:
       - minio
 
-  db:
-    container_name: wpp_postgres
-    image: postgres
+  db_mlflow:
+    container_name: wpp_mlflow_postgres
+    image: postgres:14
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -55,14 +55,33 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       PGDATA: /data/postgres
     volumes:
-      - postgres:/data/postgres
+      - postgres_mlflow:/data/postgres
     ports:
       - "5438:5432"
     networks:
-      - postgres
+      postgres_mlflow:
+        ipv4_address: 172.20.128.4  # use it to connect to db in pgadmin
+
+  db_app:
+    build: ./Docker/postgres/
+    image: wpp_app_postgres
+    container_name: wpp_app_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_APP}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_APP}
+      POSTGRES_DB: ${POSTGRES_DB_APP}
+      PGDATA: /data/postgres
+    volumes:
+      - postgres_app:/data/postgres
+    ports:
+      - "5444:5432"
+    networks:
+      postgres_app:
+        ipv4_address: 172.20.128.20 # use it to connect to db in pgadmin
 
   pgadmin:
-    # to connect to postgres use ip from: `docker ps`, `docker inspect {POSTGRES_CONTAINER ID}` -> IPAddress
+    # [depriocated] to connect to postgres use ip from: `docker ps`, `docker inspect {POSTGRES_CONTAINER ID}` -> IPAddress
     container_name: wpp_pgadmin
     image: dpage/pgadmin4
     restart: always
@@ -74,17 +93,22 @@ services:
     ports:
       - "5439:80"
     networks:
-      - postgres
+      postgres_mlflow:
+        ipv4_address: 172.20.128.2
+      postgres_app:
+        ipv4_address: 172.20.128.18
 
   mlflow:
+    build: ./Docker/mlflow/
     restart: always
     image: wpp_mlflow_server
     container_name: wpp_mlflow_server
     ports:
       - "5440:5000"
     networks:
-      - postgres
-      - s3
+      postgres_mlflow:
+        ipv4_address: 172.20.128.3
+      s3:
     environment:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
@@ -92,7 +116,7 @@ services:
       - MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL} # With minio - http://nginx:5441, with yandex - 
     command: >
       mlflow server 
-        --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
+        --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db_mlflow/${POSTGRES_DB}
         --default-artifact-root ${AWS_S3_BUCKET}
         --host 0.0.0.0
 
@@ -104,7 +128,9 @@ services:
       # check port in cmd by `netstat -a -n -o | find "5443"`
       - "5443:80"
     networks:
-      - s3
+      postgres_app:
+        ipv4_address: 172.20.128.19
+      s3:
     environment:
       # localhost is not working because it is going to use internal network 
       - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
@@ -113,10 +139,19 @@ services:
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 
 networks:
-  postgres:
+  postgres_mlflow:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.128.0/28
   s3:
     driver: bridge
+  postgres_app:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.128.16/28
 
 volumes:
-  postgres:
+  postgres_mlflow:
+  postgres_app:

@@ -34,10 +34,10 @@ clip_outliers:
 
 split_train_predict:
   train_rows:
-    dates: ['2009-07-02 13:00:00', '2012-06-25 00:00:00']
+    dates: ['2009-07-02 13:00:00', '2011-01-01 01:00:00']  # '2012-06-25 00:00:00'
     is_na: False
   predict_rows:
-    dates: ['2011-01-01 01:00:00', '2012-06-25 00:00:00' ]
+    dates: ['2011-01-01 01:00:00', '2012-06-25 00:00:00']
     is_na: True
 
 plot_exploratory:

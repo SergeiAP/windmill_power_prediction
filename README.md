@@ -133,18 +133,24 @@ Because of local issues you could find ~`SSLVerify=False` syntax. It is also one
 6. Create front-end (Grafana/Dash/streamlit)
 
 # XX. Useful commands
+Useful commands for the servies:
+```bash
+# To fill database by data from ./data/interim/data_agg_weather.csv (before run `dvc repro` to create such file)
+cd ./Docker/postgres/ && make init_insert_db
+```
+
 Useful docker commands:
 ```bash
 # create image for mlflow
-docker build -f Docker/mlflow_image/Dockerfile -t wpp_mlflow_server .
+docker build -f Docker/mlflow/Dockerfile -t wpp_mlflow_server .
 # create image for API service
 docker build -f Docker/model_service/Dockerfile -t wpp_model_service .
 # general command to build and run all docker services in `docker-compose.yml`
 docker-compose up -d --build
 # if it is required to build and run specific service
 docker-compose up -d --build app
-# if you set up data science env for experimetns (if you use remote S3, then use "db pgadmin mlflow" only)
-docker-compose up -d --build minio nginx db pgadmin mlflow 
+# if you set up data science env for experimetns (if you use remote S3, then use "db_mlflow db_app pgadmin mlflow" only)
+docker-compose up -d --build minio nginx db_mlflow pgadmin mlflow 
 # to replace files in docker without creating new image and building container
 docker cp ./inference.py wpp_model_service:/code/app/inference.py
 ```

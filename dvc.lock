@@ -137,7 +137,7 @@ stages:
           train_rows:
             dates:
             - '2009-07-02 13:00:00'
-            - '2012-06-25 00:00:00'
+            - '2011-01-01 01:00:00'
             is_na: false
           predict_rows:
             dates:
@@ -149,15 +149,15 @@ stages:
       md5: 74db2929c76e5b065dbbb3ccca9de60c
       size: 31043200
     - path: data/processed/data_train.csv
-      md5: dd29dec2092c6d93ccfec84534b92640
-      size: 77883457
+      md5: c6aac1665fbc59f624d1c0a1ae531941
+      size: 54572399
   explore_train_model:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/models/explore_train_model.py
       data/processed/data_train.csv models/metadata/ models/
     deps:
     - path: data/processed/data_train.csv
-      md5: dd29dec2092c6d93ccfec84534b92640
-      size: 77883457
+      md5: c6aac1665fbc59f624d1c0a1ae531941
+      size: 54572399
     - path: src/models/explore_train_model.py
       md5: f1e08b62cc445ef37dca4502d7a57cf3
       size: 23883
@@ -246,14 +246,14 @@ stages:
       md5: 68b329da9893e34099c7d8ad5cb9c940
       size: 2
     - path: models/lm_model.pkl
-      md5: a73d32464781fd2933b02fd169702bfe
-      size: 35060005
+      md5: f6797cb03728153e14f08325be158b61
+      size: 24573349
     - path: models/metadata/
-      md5: 0589a857fda8cd2051979c3f8964b0c0.dir
-      size: 842
+      md5: 4b66ffde2deca92f60049b232fd66a69.dir
+      size: 838
       nfiles: 2
     - path: models/metrics.json
-      md5: 63e6c673aa99fbfec6e076283f594b67
+      md5: b7cfe34d55a394dc41df6e73995799dd
       size: 48
   predict:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/models/predict.py data/processed/data_predict.csv
@@ -263,8 +263,8 @@ stages:
       md5: 74db2929c76e5b065dbbb3ccca9de60c
       size: 31043200
     - path: models/lm_model.pkl
-      md5: a73d32464781fd2933b02fd169702bfe
-      size: 35060005
+      md5: f6797cb03728153e14f08325be158b61
+      size: 24573349
     - path: src/models/predict.py
       md5: 69739b411b37b5cf2cff869ca33cede2
       size: 2297
@@ -283,15 +283,15 @@ stages:
         explore_train_model.features.include: all
     outs:
     - path: models/prediction/predictions.csv
-      md5: 851e930f3635cc6f0acfdccd6c1fa680
-      size: 1818259
+      md5: 75ce2289f8d3163ea8a2eb859ccca251
+      size: 1818735
   plot_feature_importances:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/visualization/plot_feature_importance.py
       data/processed/data_train.csv reports/figures/importance/
     deps:
     - path: data/processed/data_train.csv
-      md5: dd29dec2092c6d93ccfec84534b92640
-      size: 77883457
+      md5: c6aac1665fbc59f624d1c0a1ae531941
+      size: 54572399
     - path: src/visualization/plot_feature_importance.py
       md5: 90acce78ee5e9d53b561f75ff2efb1a9
       size: 7604
@@ -324,15 +324,15 @@ stages:
             fontsize:
     outs:
     - path: reports/figures/importance/pfi_perm_feature_importances.png
-      md5: 54d0a34ffc0dac0bb43990a2c3a2a74e
-      size: 120851
+      md5: 36f79f0ba62fcf0d0f3e38ca80e3066f
+      size: 121894
   plot_exploratory:
     cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/visualization/plot_exploratory.py
       data/processed/data_train.csv reports/figures/exploratory/
     deps:
     - path: data/processed/data_train.csv
-      md5: dd29dec2092c6d93ccfec84534b92640
-      size: 77883457
+      md5: c6aac1665fbc59f624d1c0a1ae531941
+      size: 54572399
     - path: src/visualization/plot_exploratory.py
       md5: 353469e66564411f9e9c41f2195c9f7b
       size: 7923
@@ -375,6 +375,6 @@ stages:
             alpha: 0.3
     outs:
     - path: reports/figures/exploratory/
-      md5: 442c094d39bafea3313e7642ecf9cc5c.dir
-      size: 915426
+      md5: 661fad96f708b69612db064b9d9b0439.dir
+      size: 919948
       nfiles: 4
