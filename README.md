@@ -137,7 +137,9 @@ Useful commands for the servies:
 ```bash
 # To fill database by data from ./data/interim/data_agg_weather.csv (before run `dvc repro` to create such file)
 cd ./Docker/postgres/ && make init_insert_db
-```
+# To fill database by predicted values from ./models/prediction/predictions_train.csv (before run `dvc repro` to create such file)
+cd ./Docker/postgres/ && make insert_predictions
+
 
 Useful docker commands:
 ```bash

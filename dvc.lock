@@ -378,3 +378,65 @@ stages:
       md5: 661fad96f708b69612db064b9d9b0439.dir
       size: 919948
       nfiles: 4
+  predict@test:
+    cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/models/predict.py data/processed/data_predict.csv
+      models/lm_model.pkl models/prediction/predictions_test.csv
+    deps:
+    - path: data/processed/data_predict.csv
+      md5: 74db2929c76e5b065dbbb3ccca9de60c
+      size: 31043200
+    - path: models/lm_model.pkl
+      md5: f6797cb03728153e14f08325be158b61
+      size: 24573349
+    - path: src/models/predict.py
+      md5: 0ecfb80d8ace8ac200a991666febe25a
+      size: 2108
+    params:
+      src/config.yml:
+        common.date_col: date
+        common.target: wp
+        common.windfarm_col: windfarm
+        explore_train_model.features.exclude:
+        - date
+        - wd_cos_d2s1
+        - wd_sin_d2s1
+        - ws_d2s1
+        - wd_sin_d2s3
+        - wd_cos_d2s3
+        - ws_d2s3
+        explore_train_model.features.include: all
+    outs:
+    - path: models/prediction/predictions_test.csv
+      md5: 87ceaa218927794a689d79db3739b616
+      size: 1961050
+  predict@train:
+    cmd: set PYTHONPATH=%PYTHONPATH%;./ && python src/models/predict.py data/processed/data_train.csv
+      models/lm_model.pkl models/prediction/predictions_train.csv
+    deps:
+    - path: data/processed/data_train.csv
+      md5: c6aac1665fbc59f624d1c0a1ae531941
+      size: 54572399
+    - path: models/lm_model.pkl
+      md5: f6797cb03728153e14f08325be158b61
+      size: 24573349
+    - path: src/models/predict.py
+      md5: 0ecfb80d8ace8ac200a991666febe25a
+      size: 2108
+    params:
+      src/config.yml:
+        common.date_col: date
+        common.target: wp
+        common.windfarm_col: windfarm
+        explore_train_model.features.exclude:
+        - date
+        - wd_cos_d2s1
+        - wd_sin_d2s1
+        - ws_d2s1
+        - wd_sin_d2s3
+        - wd_cos_d2s3
+        - ws_d2s3
+        explore_train_model.features.include: all
+    outs:
+    - path: models/prediction/predictions_train.csv
+      md5: 6caa82c27a82072b1d152d276c28e776
+      size: 3419951

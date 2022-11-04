@@ -11,11 +11,6 @@ from src.models.explore_train_model import (  # pylint: disable=unused-import
     func, inverse_func)
 from src.read_config import get_data_config
 
-# For pickle
-# TODO: modify as in https://stackoverflow.com/questions/54012769/saving-an-sklearn-functiontransformer-with-the-function-it-wraps
-from src.models.explore_train_model import ( # pylint: disable=unused-import
-    func, inverse_func)
-
 
 @click.command()
 @click.argument("input_filepath", type=click.Path(exists=True))
@@ -33,19 +28,19 @@ def predict(input_filepath: str, input_modelpath: str, output_filepath: str) -> 
     
     # read section
     (features, ) = get_data_config("explore_train_model", ["features"])
-    (date_col, target_col) = get_data_config("common", ["date_col", "target"])
+    (date_col, target_col, windfarm_col) = get_data_config(
+        "common", ["date_col", "target", "windfarm_col"])
     df = pd.read_csv(input_filepath)
     with open(input_modelpath, 'rb') as file_:
         model = pickle.load(file_)
 
-    dates = df[date_col]
+    df_pred = df[[date_col, windfarm_col]]
     df = (df.loc[:, features["include"]] if isinstance(features["include"], list)
           else df)
     df = df.drop(features["exclude"], axis="columns")
     
-    predictions = model.predict(df)
-    df_pred = pd.concat(
-        [dates, pd.Series(predictions, name=target_col)], axis="columns")
+    predictions = pd.Series(model.predict(df), name=target_col).clip(0, 1) 
+    df_pred = pd.concat([df_pred, predictions], axis="columns")
     start_date, end_date = df_pred[date_col].min(), df_pred[date_col].max()
     print(f"Predicted {len(predictions)} rows from {start_date} to {end_date}")
     

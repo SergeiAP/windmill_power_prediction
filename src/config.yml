@@ -2,6 +2,18 @@ common:
   seed: 42
   target: wp
   date_col: date
+  windfarm_col: windfarm
+
+db:
+  column_mapping:  # name in data source: name in db
+    date: date
+    windfarm: windfarm_id
+    wp: wp
+    hors: hors
+    u: u
+    v: v
+    ws: ws
+    wd: wd
 
 merge_data:
   data_paths:
