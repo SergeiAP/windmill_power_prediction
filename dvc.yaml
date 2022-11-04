@@ -1,3 +1,4 @@
+# TODO: import vars into makefiles and sql scripts
 vars:
   - merge_data:
       args: "data/raw/ data/interim/data_test_labels.csv"
@@ -8,7 +9,14 @@ vars:
   - explore_train_model:
       args: "data/processed/data_train.csv models/metadata/ models/"
   - predict:
-      args: "data/processed/data_predict.csv models/lm_model.pkl models/prediction/predictions.csv"
+      test:
+        args: "data/processed/data_predict.csv"
+        model: "models/lm_model.pkl"
+        out: "models/prediction/predictions_test.csv"
+      train:
+        args: "data/processed/data_train.csv"
+        model: "models/lm_model.pkl"
+        out: "models/prediction/predictions_train.csv"
   - split_train_predict:
       args: "data/interim/data_featured.csv data/processed/data_train.csv"
       out: "data/processed/data_predict.csv"
@@ -129,17 +137,21 @@ stages:
           y: train_mean
           title: "Learning train curve MAE"
   predict:
-    cmd: ${common.root} && python src/models/predict.py ${predict.args}
-    params:
-      - ${common.config}:
-        - explore_train_model.features.include
-        - explore_train_model.features.exclude
-        - common.target
-        - common.date_col
-    deps:
-      - data/processed/data_predict.csv
-      - src/models/predict.py
-      - models/lm_model.pkl
-    outs:
-      - models/prediction/predictions.csv:
-          cache: False
+    foreach:
+      ${predict}  
+    do: 
+      cmd: ${common.root} && python src/models/predict.py ${item.args} ${item.model} ${item.out}
+      params:
+        - ${common.config}:
+          - explore_train_model.features.include
+          - explore_train_model.features.exclude
+          - common.target
+          - common.date_col
+          - common.windfarm_col
+      deps:
+        - ${item.args}
+        - src/models/predict.py
+        - ${item.model}
+      outs:
+        - ${item.out}:
+            cache: False
